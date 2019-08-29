@@ -3,7 +3,7 @@
   diff = auto
   interactive = auto
   status = auto
-  ui = auto
+	ui = true
 
 [color "branch"]
   current = green
@@ -48,4 +48,9 @@
   mergeoptions = --no-edit
 [user]
 	email = stephen.schuez@gmail.com
-	name = Stephen Schuez
+	name = CHOCOLATERAISINS
+[filter "lfs"]
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f

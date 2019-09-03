@@ -48,7 +48,7 @@
   mergeoptions = --no-edit
 [user]
 	email = stephen.schuez@gmail.com
-	name = CHOCOLATERAISINS
+	name = Stephen Schuez
 [filter "lfs"]
 	process = git-lfs filter-process
 	required = true

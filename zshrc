@@ -115,9 +115,15 @@ export BUNDLER_EDITOR="'/Applications/Sublime Text.app/Contents/SharedSupport/bi
 
 
 # DOCKER DEVELOPMENT ENVIRONMENT
+# ~/.coderc
+alias dcu="rm -f tmp/pids/server.pid && docker compose up -d && docker compose logs -f"
+alias dcb="docker compose build"
+alias dcbc="docker compose build --no-cache"
 alias dcd="docker compose down --remove-orphans"
 alias dcr="docker compose run --rm app"
-
+alias dcx="docker compose restart"
+alias dcs="docker compose stop"
+alias dce="docker compose exec app"
 
 
 SSH_ENV=$HOME/.ssh/environment

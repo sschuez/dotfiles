@@ -1,56 +1,56 @@
+# Environment Variables
+export ZSH=$HOME/.oh-my-zsh
+export HOMEBREW_NO_ANALYTICS=1
+export PATH="${HOME}/.rbenv/bin:${PATH}"
+export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+export NVM_DIR="$HOME/.nvm"
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export BUNDLER_EDITOR=code
+export EDITOR=code
+export PYTHONBREAKPOINT=ipdb.set_trace
+export PATH="/anaconda3/bin:${HOME}/anaconda3/bin:${PATH}"
+export PATH="./bin:./node_modules/.bin:${PATH}:/usr/local/sbin"
+export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
+export BUNDLER_EDITOR="'/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl' -a"
+
+# Oh My Zsh Settings
 # Used this to create tmux like terminal: https://dev.to/andrenbrandao/terminal-setup-with-zsh-tmux-dracula-theme-48lm
+ZSH_THEME="common"
+# ZSH_THEME="powerlevel10k/powerlevel10k"
+# ZSH_THEME="robbyrussell" # Default theme lewagon
+ZSH_DISABLE_COMPFIX=true
+plugins=(
+  git
+  gitfast
+  last-working-dir
+  common-aliases
+  sublime
+  zsh-syntax-highlighting
+  history-substring-search
+  zsh-autosuggestions
+)
 
-# New config: ~/.p10k.zsh.
-# Backup of the old config: $TMPDIR/.p10k.zsh.R4IyhCgG7E.
-# Backup of ~/.zshrc: $TMPDIR/.zshrc.TvPAo2PGLt.
-
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
+# Initialization Blocks
+# Powerlevel10k instant prompt
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
-
-ZSH=$HOME/.oh-my-zsh
-
-ZSH_DISABLE_COMPFIX=true
-
-# You can change the theme with another one:
-#   https://github.com/robbyrussell/oh-my-zsh/wiki/themes
-# ZSH_THEME="robbyrussell" # Default theme lewagon
-ZSH_THEME="powerlevel10k/powerlevel10k"
-
-# Useful oh-my-zsh plugins for Le Wagon bootcamps
-plugins=(git gitfast last-working-dir common-aliases sublime zsh-syntax-highlighting history-substring-search zsh-autosuggestions)
-
-
-# Prevent Homebrew from reporting - https://github.com/Homebrew/brew/blob/master/share/doc/homebrew/Analytics.md
-export HOMEBREW_NO_ANALYTICS=1
-
-# Disable warning about insecure completion-dependent directories
-ZSH_DISABLE_COMPFIX=true
-
-# Actually load Oh-My-Zsh
 source "${ZSH}/oh-my-zsh.sh"
-unalias rm # No interactive rm by default (brought by plugins/common-aliases)
-unalias lt # we need `lt` for https://github.com/localtunnel/localtunnel
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# Load rbenv if installed (To manage your Ruby versions)
-export PATH="${HOME}/.rbenv/bin:${PATH}"
+# Ruby Environment (rbenv)
 type -a rbenv > /dev/null && eval "$(rbenv init -)"
 
-# Load pyenv (to manage your Python versions)
-export PYENV_VIRTUALENV_DISABLE_PROMPT=1
-type -a pyenv > /dev/null && eval "$(pyenv init -)" && eval "$(pyenv virtualenv-init - 2> /dev/null)" && RPROMPT+='[🐍 $(pyenv version-name)]'
+# Python Environment (pyenv)
+type -a pyenv > /dev/null && eval "$(pyenv init -)" && eval "$(pyenv virtualenv-init - 2> /dev/null)"
 
-# Load nvm if installed (To manage your Node versions)
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-# Call `nvm use` automatically in a directory with a `.nvmrc` file
+# Node Version Manager (nvm)
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 autoload -U add-zsh-hook
 load-nvmrc() {
+  # Function to automatically call `nvm use` in directories with a `.nvmrc`
   if nvm -v &> /dev/null; then
     local node_version="$(nvm version)"
     local nvmrc_path="$(nvm_find_nvmrc)"
@@ -71,30 +71,7 @@ load-nvmrc() {
 type -a nvm > /dev/null && add-zsh-hook chpwd load-nvmrc
 type -a nvm > /dev/null && load-nvmrc
 
-
-# Anaconda binaries (python, pip, conda, jupyter, pytest, pylint etc.)
-export PATH="/anaconda3/bin:${HOME}/anaconda3/bin:${PATH}"
-
-# Rails and Ruby uses the local `bin` folder to store binstubs.
-# So instead of running `bin/rails` like the doc says, just run `rails`
-# Same for `./node_modules/.bin` and nodejs
-export PATH="./bin:./node_modules/.bin:${PATH}:/usr/local/sbin"
-
-# Store your own aliases in the ~/.aliases file and load the here.
-[[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
-
-# Encoding stuff for the terminal
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-
-export BUNDLER_EDITOR=code
-export EDITOR=code
-
-# Set ipdb as the default Python debugger
-export PYTHONBREAKPOINT=ipdb.set_trace
-
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
+# Conda Initialization
 __conda_setup="$('/Users/Stephen/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
@@ -106,16 +83,14 @@ else
     fi
 fi
 unset __conda_setup
-# <<< conda initialize <<<
 
-[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# Custom Aliases
+unalias rm
+unalias lt
+[[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
+alias vim='nvim'
 
-export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
-export BUNDLER_EDITOR="'/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl' -a"
-
-
-# DOCKER DEVELOPMENT ENVIRONMENT
-# ~/.coderc
+# Docker Development Environment Aliases
 alias dcu="rm -f tmp/pids/server.pid && docker compose up -d && docker compose logs -f"
 alias dcb="docker compose build"
 alias dcbc="docker compose build --no-cache"
@@ -125,10 +100,12 @@ alias dcx="docker compose restart"
 alias dcs="docker compose stop"
 alias dce="docker compose exec app"
 
+# Git Aliases
+alias gacp='function _gacp(){ git add . && git commit -m "$1" && git push; };_gacp'
+alias gac='function _gac(){ git add . && git commit -m "$1"; };_gac'
 
+# SSH Agent Startup
 SSH_ENV=$HOME/.ssh/environment
-
-# start the ssh-agent
 function start_agent {
     echo "Initializing new SSH agent..."
     # spawn ssh-agent
@@ -148,5 +125,3 @@ else
     start_agent;
 fi
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

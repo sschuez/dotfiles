@@ -9,3 +9,4 @@ alias serve='ruby -run -e httpd . -p 8000'  # Or python -m SimpleHTTPServer :)
 # Rails bundler shorter
 alias be='bundle exec'
 alias bi='bundle install'
+

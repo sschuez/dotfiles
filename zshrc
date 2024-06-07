@@ -4,9 +4,7 @@ export HOMEBREW_NO_ANALYTICS=1
 export NVM_DIR="$HOME/.nvm"
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
-export EDITOR='nvim' # Assuming VSCode, change if different
-export PYTHONBREAKPOINT='ipdb.set_trace'
-export BUNDLER_EDITOR="'/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl' -a"
+export EDITOR='nvim'
 
 # Source theme from dotfiles themes folder
 source $HOME/code/dotfiles/themes/common.zsh-theme
@@ -26,6 +24,7 @@ zplug "plugins/gitfast", from:oh-my-zsh
 zplug "plugins/last-working-dir", from:oh-my-zsh
 zplug "plugins/common-aliases", from:oh-my-zsh
 zplug "plugins/sublime", from:oh-my-zsh
+
 # Load if not already installed
 if ! zplug check --verbose; then
     printf "Installing zplug plugins...\n"
@@ -34,28 +33,13 @@ fi
 # Source the plugins
 zplug load
 
-# Ruby Environment (rbenv)
-type -a rbenv > /dev/null && eval "$(rbenv init -)"
+# Alias to change color themes
+alias theme="$HOME/code/dotfiles/scripts/apply_theme.sh"
+alias vim='nvim'
 
-# Python Environment (pyenv)
-type -a pyenv > /dev/null && eval "$(pyenv init -)" && eval "$(pyenv virtualenv-init - 2> /dev/null)"
-
-# Node Version Manager (nvm)
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
-# Conda Initialization
-__conda_setup="$('nvim' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/Users/Stephen/anaconda3/etc/profile.d/conda.sh" ]; then
-        . "/Users/Stephen/anaconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/Users/Stephen/anaconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
+# Git Aliases
+alias gacp='function _gacp(){ git add . && git commit -m "$1" && git push; };_gacp'
+alias gac='function _gac(){ git add . && git commit -m "$1"; };_gac'
 
 # Docker Development Environment Aliases
 alias dcu="rm -f tmp/pids/server.pid && docker compose up -d && docker compose logs -f"
@@ -67,13 +51,18 @@ alias dcx="docker compose restart"
 alias dcs="docker compose stop"
 alias dce="docker compose exec app"
 
-# Git Aliases
-alias gacp='function _gacp(){ git add . && git commit -m "$1" && git push; };_gacp'
-alias gac='function _gac(){ git add . && git commit -m "$1"; };_gac'
-
 # Custom Aliases
 [[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
-alias vim='nvim'
+
+# Node Version Manager (nvm)
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+# Python Environment (pyenv)
+type -a pyenv > /dev/null && eval "$(pyenv init -)" && eval "$(pyenv virtualenv-init - 2> /dev/null)"
+
+# Ruby Environment (rbenv)
+type -a rbenv > /dev/null && eval "$(rbenv init -)"
 
 # SSH Agent Startup
 SSH_ENV="$HOME/.ssh/environment"
@@ -90,3 +79,6 @@ if [ -f "${SSH_ENV}" ]; then
 else
     start_agent;
 fi
+
+# Created by `pipx` on 2024-06-07 14:16:16
+export PATH="$PATH:/Users/stephenschuz/.local/bin"

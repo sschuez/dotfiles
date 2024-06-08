@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define available themes
-THEME_NAMES=("Tokyo Night" "Catppuccin Mocha" "Catppuccin Latte" "Nord" "Everforest" "Gruvbox" "Kanagawa" "Rose Pine")
+THEME_NAMES=("Tokyo Night" "Catppuccin Mocha" "Catppuccin Latte" "Nord" "Everforest" "Gruvbox" "Kanagawa" "Rose Pine" "Jellybeans")
 
 # Use gum to select a theme (assuming gum is installed)
 THEME=$(gum choose "${THEME_NAMES[@]}" --header "Choose your theme" --height 9 | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
@@ -13,6 +13,8 @@ THEME=$(gum choose "${THEME_NAMES[@]}" --header "Choose your theme" --height 9 |
 THEME_DIR="$HOME/code/dotfiles/themes"
 NEOVIM_THEME_DIR="$THEME_DIR/neovim"
 TMUX_THEME_DIR="$THEME_DIR/tmux"
+CURRENT_THEME_CONF="$HOME/.tmux.conf"
+TMUX_THEME_CONF="$TMUX_THEME_DIR/${THEME}.conf"
 
 # Function to apply the theme to iTerm2 using Python script
 apply_iterm_theme() {
@@ -24,12 +26,24 @@ apply_iterm_theme() {
 
 # Apply theme to tmux
 apply_tmux_theme() {
-	local tmux_theme="$TMUX_THEME_DIR/$THEME.conf"
-	if [ -f "$tmux_theme" ]; then
-		tmux source-file "$tmux_theme"
-		echo "Applied tmux theme."
+	if [ -f "$TMUX_THEME_CONF" ]; then
+		# Backup the current tmux config
+		cp "$CURRENT_THEME_CONF" "${CURRENT_THEME_CONF}.bak"
+
+		# Clear any existing theme settings from the tmux config
+		sed -i '/# --> BEGIN THEME/,/# --> END THEME/d' "$CURRENT_THEME_CONF"
+
+		# Append the new theme configuration
+		echo "# --> BEGIN THEME" >>"$CURRENT_THEME_CONF"
+		cat "$TMUX_THEME_CONF" >>"$CURRENT_THEME_CONF"
+		echo "# --> END THEME" >>"$CURRENT_THEME_CONF"
+
+		# Reload tmux configuration
+		tmux source-file "$CURRENT_THEME_CONF"
+
+		echo "Applied tmux theme: $THEME"
 	else
-		echo "tmux theme file not found."
+		echo "tmux theme configuration file for '$THEME' not found."
 	fi
 }
 

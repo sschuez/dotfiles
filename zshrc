@@ -35,6 +35,7 @@ zplug load
 
 # Alias to change color themes
 alias theme="$HOME/code/dotfiles/scripts/apply_theme.sh"
+alias th="$HOME/code/dotfiles/scripts/apply_theme.sh"
 alias vim='nvim'
 
 # Git Aliases

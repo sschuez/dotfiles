@@ -1,9 +1,10 @@
 return {
-	{ "nanotech/jellybeans.vim" },
+	{ "rktjmp/lush.nvim" },
+	{ "metalelf0/jellybeans-nvim" },
 	{
 		"lazyvim/lazyvim",
 		opts = {
-			colorscheme = "jellybeans",
+			colorscheme = "jellybeans-nvim",
 			background = "dark",
 		},
 	},

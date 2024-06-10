@@ -21,7 +21,7 @@ zplug "zsh-users/zsh-autosuggestions"
 zplug "zsh-users/zsh-syntax-highlighting"
 zplug "plugins/git", from:oh-my-zsh
 zplug "plugins/gitfast", from:oh-my-zsh
-zplug "plugins/last-working-dir", from:oh-my-zsh
+# zplug "plugins/last-working-dir", from:oh-my-zsh
 zplug "plugins/common-aliases", from:oh-my-zsh
 zplug "plugins/sublime", from:oh-my-zsh
 
@@ -32,25 +32,6 @@ if ! zplug check --verbose; then
 fi
 # Source the plugins
 zplug load
-
-# Alias to change color themes
-alias theme="$HOME/code/dotfiles/scripts/apply_theme.sh"
-alias th="$HOME/code/dotfiles/scripts/apply_theme.sh"
-alias vim='nvim'
-
-# Git Aliases
-alias gacp='function _gacp(){ git add . && git commit -m "$1" && git push; };_gacp'
-alias gac='function _gac(){ git add . && git commit -m "$1"; };_gac'
-
-# Docker Development Environment Aliases
-alias dcu="rm -f tmp/pids/server.pid && docker compose up -d && docker compose logs -f"
-alias dcb="docker compose build"
-alias dcbc="docker compose build --no-cache"
-alias dcd="docker compose down --remove-orphans"
-alias dcr="docker compose run --rm app"
-alias dcx="docker compose restart"
-alias dcs="docker compose stop"
-alias dce="docker compose exec app"
 
 # Custom Aliases
 [[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"

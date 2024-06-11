@@ -33,6 +33,25 @@ fi
 # Source the plugins
 zplug load
 
+# To make navigating back a folder easy START -->
+autoload -Uz compinit
+compinit
+
+_cd_dotdot_complete() {
+  if [[ $LBUFFER == "cd .." ]]; then
+    LBUFFER+="\/"
+    zle redisplay
+  else
+    zle complete-word
+  fi
+}
+
+zle -N _cd_dotdot_complete
+bindkey '^I' _cd_dotdot_complete
+
+zstyle ':completion:*' menu select
+# END <-- To make navigating back a folder easy --> Start
+
 # Custom Aliases
 [[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
 

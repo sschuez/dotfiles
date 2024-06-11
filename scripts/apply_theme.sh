@@ -1,7 +1,19 @@
 #!/bin/bash
 
 # Define available themes
-THEME_NAMES=("Tokyo Night" "Catppuccin Mocha" "Catppuccin Latte" "Solarized" "Nord" "Everforest" "Gruvbox" "Kanagawa" "Rose Pine" "Jellybeans")
+THEME_NAMES=(
+	"Tokyo Night"
+	"Catppuccin Mocha"
+	"Catppuccin Latte"
+	"Solarized"
+	"Nord"
+	"Gruvbox"
+	"Kanagawa"
+	"Rose Pine"
+	"Everforest Light"
+	"Everforest Dark"
+	"Jellybeans"
+)
 
 # Use gum to select a theme (assuming gum is installed)
 THEME=$(gum choose "${THEME_NAMES[@]}" --header "Choose your theme" --height 9 | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')

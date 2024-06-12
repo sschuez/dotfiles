@@ -54,3 +54,14 @@ alias yst="yabai --stop-service && skhd --stop-service"
 alias sks="skhd --start-service"
 alias skrs="skhd --restart-service"
 alias skst="skhd --stop-service"
+
+# Directories
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+# Tools
+alias n='nvim'
+alias g='git'
+alias d='docker'
+alias r='rails'

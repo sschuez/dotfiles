@@ -5,8 +5,8 @@ TERM = "xterm-256color"
 # program = "zsh"
 
 [window]
-padding.x = 12
-padding.y = 12
+padding.x = 10
+padding.y = 10
 decorations = "None"
 # opacity = 0.97
 

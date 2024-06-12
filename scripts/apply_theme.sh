@@ -25,8 +25,10 @@ THEME=$(gum choose "${THEME_NAMES[@]}" --header "Choose your theme" --height 9 |
 THEME_DIR="$HOME/code/dotfiles/themes"
 NEOVIM_THEME_DIR="$THEME_DIR/neovim"
 TMUX_THEME_DIR="$THEME_DIR/tmux"
-CURRENT_THEME_CONF="$HOME/code/dotfiles/tmux/.tmux.conf"
 TMUX_THEME_CONF="$TMUX_THEME_DIR/${THEME}.conf"
+CURRENT_THEME_CONF="$HOME/code/dotfiles/tmux/.tmux.conf"
+ALACRITTY_THEME_DIR="$THEME_DIR/alacritty"
+ALACRITTY_THEME_CONF="$ALACRITTY_THEME_DIR/${THEME}.toml"
 
 # Function to apply the theme to iTerm2 using Python script
 apply_iterm_theme() {
@@ -52,6 +54,16 @@ apply_tmux_theme() {
 	fi
 }
 
+# Apply theme to Alacritty
+apply_alacritty_theme() {
+	if [ -f "$ALACRITTY_THEME_CONF" ]; then
+		cp "$ALACRITTY_THEME_CONF" "$HOME/.config/alacritty/theme.toml"
+		echo "Applied Alacritty theme: $THEME"
+	else
+		echo "Alacritty theme configuration file for '$THEME' not found."
+	fi
+}
+
 # Apply theme to Neovim
 apply_neovim_theme() {
 	local neovim_theme="$NEOVIM_THEME_DIR/$THEME.lua"
@@ -64,8 +76,9 @@ apply_neovim_theme() {
 }
 
 # Apply the selected theme
-apply_iterm_theme
+# apply_iterm_theme
 apply_tmux_theme
+apply_alacritty_theme
 apply_neovim_theme
 
 echo "Theme applied: $THEME"

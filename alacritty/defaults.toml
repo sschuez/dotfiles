@@ -1,0 +1,14 @@
+[env]
+TERM = "xterm-256color"
+
+# [shell]
+# program = "zsh"
+
+[window]
+padding.x = 12
+padding.y = 12
+decorations = "None"
+# opacity = 0.97
+
+# [keyboard]
+# bindings = [{ key = "F11", action = "ToggleFullscreen" }]

@@ -15,6 +15,10 @@ alias theme="$HOME/code/dotfiles/scripts/apply_theme.sh"
 alias th="$HOME/code/dotfiles/scripts/apply_theme.sh"
 alias vim='nvim'
 
+# Alias to chenge font
+alias font="$HOME/code/dotfiles/scripts/apply_font.sh"
+alias ft="$HOME/code/dotfiles/scripts/apply_font.sh"
+
 # Tmux Aliases
 alias tx='if ! tmux has-session 2>/dev/null; then tmux new-session -d; fi && tmux source-file ~/.tmux.conf && tmux'
 alias tmux='if ! tmux has-session 2>/dev/null; then tmux new-session -d; fi && tmux source-file ~/.tmux.conf && tmux'

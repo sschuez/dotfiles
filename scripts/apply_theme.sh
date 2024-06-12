@@ -5,7 +5,6 @@ THEME_NAMES=(
 	"Tokyo Night"
 	"Catppuccin Mocha"
 	"Catppuccin Latte"
-	"Solarized"
 	"Nord"
 	"Gruvbox"
 	"Kanagawa"
@@ -13,13 +12,17 @@ THEME_NAMES=(
 	"Everforest Light"
 	"Everforest Dark"
 	"Jellybeans"
+	"Cancel"
 )
 
 # Use gum to select a theme (assuming gum is installed)
 THEME=$(gum choose "${THEME_NAMES[@]}" --header "Choose your theme" --height 9 | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
 
 # Exit if no theme is selected
-[ ! -n "$THEME" ] && exit 0
+if [ -z "$THEME" ] || [ "$THEME" == "cancel" ]; then
+	echo "No theme selected."
+	exit 0
+fi
 
 # Define theme directories
 THEME_DIR="$HOME/code/dotfiles/themes"
@@ -30,7 +33,7 @@ CURRENT_THEME_CONF="$HOME/code/dotfiles/tmux/.tmux.conf"
 ALACRITTY_THEME_DIR="$THEME_DIR/alacritty"
 ALACRITTY_THEME_CONF="$ALACRITTY_THEME_DIR/${THEME}.toml"
 
-# Function to apply the theme to iTerm2 using Python script
+# Function to apply the theme to iTerm2 using Python script -> currently not needed
 apply_iterm_theme() {
 	export THEME=$THEME
 	source ~/venvs/iterm2-env/bin/activate

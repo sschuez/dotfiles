@@ -3,10 +3,13 @@
 # Set the base path for your dotfiles
 DOTFILES_PATH="$HOME/code/dotfiles"
 
-# Use gum to choose the font
-FONT=$(gum choose "Cascadia Mono" "Fira Mono" "JetBrains Mono" "Meslo" --header "Choose your programming font:" --height 6 | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
+FONT=$(gum choose "Cascadia Mono" "Fira Mono" "JetBrains Mono" "Meslo" "Cancel" --header "Choose your programming font:" --height 6 | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
 
-[ ! -n "$FONT" ] && exit 0
+# If the user chooses "Cancel" or no selection is made, exit the script
+if [ -z "$FONT" ] || [ "$FONT" = "cancel" ]; then
+	echo "No font selected. Exiting..."
+	exit 0
+fi
 
 # Determine the Nerd Font name
 case "$FONT" in

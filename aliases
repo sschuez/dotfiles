@@ -46,9 +46,9 @@ alias krd="kamal redeploy"
 alias kd="kamal deploy"
 
 # Yabai Aliases
-alias ys="yabai --start-service"
-alias yrs="yabai --restart-service"
-alias yst="yabai --stop-service"
+alias ys="yabai --start-service && skhd --start-service"
+alias yrs="yabai --restart-service && skhd --restart-service"
+alias yst="yabai --stop-service && skhd --stop-service"
 
 # Skhd Aliases
 alias sks="skhd --start-service"

@@ -33,24 +33,12 @@ fi
 # Source the plugins
 zplug load
 
-# # To make navigating back a folder easy START -->
-# autoload -Uz compinit
-# compinit
+# ---- Zoxide (better cd) ----
+eval "$(zoxide init zsh)"
+alias cd="z"
 
-# _cd_dotdot_complete() {
-#   if [[ $LBUFFER == "cd .." ]]; then
-#     LBUFFER+="\/"
-#     zle redisplay
-#   else
-#     zle complete-word
-#   fi
-# }
-
-# zle -N _cd_dotdot_complete
-# bindkey '^I' _cd_dotdot_complete
-
-# zstyle ':completion:*' menu select
-# # END <-- To make navigating back a folder easy --> Start
+# Enable autojump
+[[ -s $(brew --prefix autojump)/share/autojump/autojump.zsh ]] && . $(brew --prefix autojump)/share/autojump/autojump.zsh
 
 # Custom Aliases
 [[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
@@ -83,3 +71,16 @@ fi
 
 # Created by `pipx` on 2024-06-07 14:16:16
 export PATH="$PATH:/Users/stephenschuz/.local/bin"
+
+# Refined history setup
+HISTFILE=$HOME/.zhistory
+SAVEHIST=1000
+HISTSIZE=999
+setopt share_history
+setopt hist_expire_dups_first
+setopt hist_ignore_dups
+setopt hist_verify
+
+# completion using arrow keys (based on history)
+bindkey '^[[A' history-search-backward
+bindkey '^[[B' history-search-forward

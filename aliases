@@ -44,3 +44,13 @@ alias kl="kamal app logs -f"
 alias kc="kamal app exec -i 'bin/rails console'"
 alias krd="kamal redeploy"
 alias kd="kamal deploy"
+
+# Yabai Aliases
+alias ys="yabai --start-service"
+alias yrs="yabai --restart-service"
+alias yst="yabai --stop-service"
+
+# Skhd Aliases
+alias sks="skhd --start-service"
+alias skrs="skhd --restart-service"
+alias skst="skhd --stop-service"

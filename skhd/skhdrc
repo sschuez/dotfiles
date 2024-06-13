@@ -67,6 +67,12 @@ shift + alt - u : yabai -m window --toggle float; yabai -m window --grid 1:2:0:0
 # Make the focused window cover the right half of the screen
 shift + alt - i : yabai -m window --toggle float; yabai -m window --grid 1:2:1:0:1:2
 
+# Make the focused window cover the top half of the screen
+shift + alt - v : yabai -m window --toggle float; yabai -m window --grid 2:1:0:0:2:1
+
+# Make the focused window cover the bottom half of the screen
+shift + alt - b : yabai -m window --toggle float; yabai -m window --grid 2:1:0:1:2:1
+
 # stop/start/restart yabai
 ctrl + alt - q : yabai --stop-service
 ctrl + alt - s : yabai --start-service

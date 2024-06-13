@@ -59,6 +59,9 @@ alias skst="skhd --stop-service"
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
+alias proj='cd ~/code/projects'
+alias sub='cd ~/code/projects/submissio'
+
 
 # Tools
 alias n='nvim'

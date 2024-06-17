@@ -61,6 +61,7 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 alias proj='cd ~/code/projects'
 alias sub='cd ~/code/projects/submissio'
+alias dot='cd ~/code/dotfiles'
 
 
 # Tools

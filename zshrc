@@ -40,6 +40,20 @@ alias cd="z"
 # Enable autojump
 [[ -s $(brew --prefix autojump)/share/autojump/autojump.zsh ]] && . $(brew --prefix autojump)/share/autojump/autojump.zsh
 
+# Function to update the tmux window name
+update_tmux_window_name() {
+  if [[ -n "$TMUX" ]]; then
+    tmux rename-window "$(basename "$PWD")"
+  fi
+}
+# Use the chpwd function to trigger the update_tmux_window_name function on directory change
+chpwd() {
+  update_tmux_window_name
+}
+
+# Also call it when the shell starts
+update_tmux_window_name
+
 # Custom Aliases
 [[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
 
@@ -51,7 +65,7 @@ alias cd="z"
 type -a pyenv > /dev/null && eval "$(pyenv init -)" && eval "$(pyenv virtualenv-init - 2> /dev/null)"
 
 # Ruby Environment (rbenv)
-type -a rbenv > /dev/null && eval "$(rbenv init -)"
+if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi
 
 # SSH Agent Startup
 SSH_ENV="$HOME/.ssh/environment"

@@ -2,7 +2,5 @@ import = [
   "~/code/dotfiles/alacritty/theme.toml",
   "~/code/dotfiles/alacritty/font.toml",
   "~/code/dotfiles/alacritty/defaults.toml",
+  "~/code/dotfiles/alacritty/font-size.toml",
 ]
-
-[font]
-size = 12

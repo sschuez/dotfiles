@@ -18,6 +18,12 @@ alias vim='nvim'
 # Alias to chenge font
 alias font="$HOME/code/dotfiles/scripts/apply_font.sh"
 alias ft="$HOME/code/dotfiles/scripts/apply_font.sh"
+alias fontsize="$HOME/code/dotfiles/scripts/apply_font_size.sh"
+alias fs="$HOME/code/dotfiles/scripts/apply_font_size.sh"
+alias fs+="$HOME/code/dotfiles/scripts/change_font_size.sh increment"
+alias fs-="$HOME/code/dotfiles/scripts/change_font_size.sh decrement"
+alias flg="$HOME/code/dotfiles/scripts/change_font_size.sh increment"
+alias fsm="$HOME/code/dotfiles/scripts/change_font_size.sh decrement"
 
 # Tmux Aliases
 alias tx='if ! tmux has-session 2>/dev/null; then tmux new-session -d; fi && tmux source-file ~/.tmux.conf && tmux'

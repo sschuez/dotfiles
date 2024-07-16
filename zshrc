@@ -5,6 +5,7 @@ export NVM_DIR="$HOME/.nvm"
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export EDITOR='nvim'
+export THOR_MERGE="nvim -d"
 
 # Source theme from dotfiles themes folder
 source $HOME/code/dotfiles/themes/common.zsh-theme

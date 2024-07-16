@@ -70,6 +70,7 @@ alias proj='cd ~/code/projects'
 alias sub='cd ~/code/submissio/submissio'
 alias dot='cd ~/code/dotfiles'
 alias vimconf='cd ~/.config/nvim'
+alias doc='cd ~/Desktop/docs/'
 
 # Tools
 alias n='nvim'

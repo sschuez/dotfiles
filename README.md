@@ -1,8 +1,23 @@
-This repository is used to configre my development environment.
+# Dotfiles Setup for my MacOS
 
-## Toolset
-
-- [oh-my-zsh](http://ohmyz.sh/)
-- [LazyVim](https://www.lazyvim.org/)
-- [git](https://git-scm.com/)
 - Ruby via [`rbenv`](https://github.com/rbenv/rbenv)
+
+## Reinstall Homebrew Packages
+
+To reinstall all Homebrew packages from the saved list, run the following script:
+
+```bash
+~/code/dotfiles/scripts/install_brews.sh
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```

@@ -7,6 +7,7 @@ export LC_ALL=en_US.UTF-8
 export EDITOR='nvim'
 export THOR_MERGE="nvim -d"
 
+# Homebrew path
 export PATH="/opt/homebrew/bin:$PATH"
 export PATH="/opt/homebrew/opt/openssl@3/bin:$PATH"
 export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"
@@ -106,3 +107,11 @@ setopt hist_verify
 # completion using arrow keys (based on history)
 bindkey '^[[A' history-search-backward
 bindkey '^[[B' history-search-forward
+
+# Add Homebrew zsh completions
+if type brew &>/dev/null; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+  FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
+  autoload -Uz compinit
+  compinit
+fi

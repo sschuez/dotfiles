@@ -7,6 +7,13 @@ export LC_ALL=en_US.UTF-8
 export EDITOR='nvim'
 export THOR_MERGE="nvim -d"
 
+export PATH="/opt/homebrew/bin:$PATH"
+export PATH="/opt/homebrew/opt/openssl@3/bin:$PATH"
+export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"
+export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"
+export PKG_CONFIG_PATH="/opt/homebrew/opt/openssl@3/lib/pkgconfig"
+export RUBY_CONFIGURE_OPTS="--with-libyaml-dir=$(brew --prefix libyaml)"
+
 # Source theme from dotfiles themes folder
 source $HOME/code/dotfiles/themes/common.zsh-theme
 

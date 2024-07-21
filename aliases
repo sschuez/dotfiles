@@ -77,3 +77,9 @@ alias n='nvim'
 alias g='git'
 alias d='docker'
 alias r='rails'
+
+brew_install_update() {
+    brew install "$@" && echo "Updating Homebrew package list..." && ~/code/dotfiles/scripts/update_brews.sh
+}
+alias bri='brew_install_update'
+

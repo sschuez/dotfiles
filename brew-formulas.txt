@@ -154,6 +154,7 @@ rubberband
 ruby-build
 rust
 sdl2
+skhd
 snappy
 speex
 sqlite
@@ -176,6 +177,7 @@ x265
 xorgproto
 xvid
 xz
+yabai
 z3
 zeromq
 zimg

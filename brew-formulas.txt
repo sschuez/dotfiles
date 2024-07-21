@@ -13,6 +13,8 @@ cmake
 curl
 dav1d
 dbus
+docker
+docker-completion
 faac
 faad2
 fd

@@ -79,7 +79,11 @@ alias d='docker'
 alias r='rails'
 
 brew_install_update() {
-    brew install "$@" && echo "Updating Homebrew package list..." && ~/code/dotfiles/scripts/update_brews.sh
+    brew install "$@" && echo "Updating brew list..." && ~/code/dotfiles/scripts/update_brews.sh
 }
 alias bri='brew_install_update'
+brew_install_cask_update() {
+    brew install --cask "$@" && echo "Updating brew list..." && ~/code/dotfiles/scripts/update_brews.sh
+  }
+alias bric='brew_install_cask_update'
 

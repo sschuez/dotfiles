@@ -15,6 +15,7 @@ dav1d
 dbus
 docker
 docker-completion
+eza
 faac
 faad2
 fd
@@ -57,6 +58,7 @@ jpeg-xl
 json-glib
 krb5
 lame
+lazydocker
 lazygit
 leptonica
 libarchive
@@ -144,6 +146,7 @@ pcre2
 pixman
 pkg-config
 postgresql@14
+postgresql@15
 pugixml
 py3cairo
 pygobject3

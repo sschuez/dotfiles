@@ -72,6 +72,15 @@ alias dot='cd ~/code/dotfiles'
 alias vimconf='cd ~/.config/nvim'
 alias doc='cd ~/Desktop/docs/'
 
+# File system
+alias ls='eza -lh --group-directories-first --icons'
+alias lsa='ls -a'
+alias lt='eza --tree --level=2 --long --icons --git'
+alias lta='lt -a'
+alias ff="fzf --preview 'batcat --style=numbers --color=always {}'"
+alias fd='fdfind'
+alias cd='z'
+
 # Tools
 alias n='nvim'
 alias g='git'
@@ -87,3 +96,12 @@ brew_install_cask_update() {
   }
 alias bric='brew_install_cask_update'
 
+# From Omakub
+# Tools
+alias n='nvim'
+alias g='git'
+alias d='docker'
+alias r='rails'
+alias bat='batcat'
+alias lzg='lazygit'
+alias lzd='lazydocker'

@@ -185,6 +185,7 @@ xvid
 xz
 yabai
 z3
+zellij
 zeromq
 zimg
 zoxide

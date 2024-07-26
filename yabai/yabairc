@@ -11,12 +11,12 @@ yabai -m config layout bsp
 yabai -m config window_placement second_child
 
 ## padding set to 8px
-yabai -m config top_padding 8
-yabai -m config bottom_padding 8
-yabai -m config left_padding 8
-yabai -m config right_padding 8
-yabai -m config window_gap 8
-yabai -m config window_gap 8 center mouse on window with focus
+yabai -m config top_padding 4
+yabai -m config bottom_padding 4
+yabai -m config left_padding 4
+yabai -m config right_padding 4
+yabai -m config window_gap 4
+yabai -m config window_gap 4 center mouse on window with focus
 yabai -m config mouse_follows_focus on
 
 # modifier for clicking and dragging with mouse
@@ -26,6 +26,15 @@ yabai -m config mouse_action1 move
 # set modifier + right-click drag to resize window
 yabai -m config mouse_action2 resize
 
+# Default positions
+# Hey Email
+yabai -m rule --add app="^Hey$" space=1
+# Safari
+yaibai -m rule --add app="^Safari$" space=2
+# Firefox Developer Edition
+yabai -m rule --add app="^Firefox Developer Edition$" space=5
+# Terminal
+yabai -m rule --add app="^(Alacritty)$" space=6
 
 # when window is dropped in center of another window, swap them (on edges it will split it)
 yabai -m mouse_drop_action swap
@@ -34,3 +43,4 @@ yabai -m rule --add app="^System Settings$" manage=off
 yabai -m rule --add app="^Calculator$" manage=off
 yabai -m rule --add app="^Karabiner-Elements$" manage=off
 yabai -m rule --add app="^Finder$" manage=off
+

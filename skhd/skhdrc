@@ -1,3 +1,26 @@
+# Checkout this guy for more inspiration: https://github.com/anujc4/dotfiles/blob/master/macos_wm/skhd/skhdrc
+
+# Toggle between bsp and stack layout
+ctrl + shift - space : /opt/homebrew/bin/yabai -m space --layout "$(/opt/homebrew/bin/yabai -m query --spaces --space | /opt/homebrew/bin/jq -r 'if .type == "bsp" then "stack" else "bsp" end')"
+
+# In Stack mode, focus on the next/prev window --> Not working yet
+# alt + p : /opt/homebrew/bin/yabai -m window --focus stack.prev
+# alt - n : /opt/homebrew/bin/yabai -m window --focus stack.next
+# alt - f : /opt/homebrew/bin/yabai -m window --focus stack.first
+# alt - g : /opt/homebrew/bin/yabai -m window --focus stack.last
+
+# fast focus desktop --> Not working yet
+# ctrl - left : /opt/homebrew/bin/yabai -m space --focus prev
+# ctrl - right : /opt/homebrew/bin/yabai -m space --focus next
+# # ctrl - z : /opt/homebrew/bin/yabai -m space --focus recent
+# ctrl - 1 : /opt/homebrew/bin/yabai -m space --focus 1
+# ctrl - 2 : /opt/homebrew/bin/yabai -m space --focus 2
+# ctrl - 3 : /opt/homebrew/bin/yabai -m space --focus 3
+# ctrl - 4 : /opt/homebrew/bin/yabai -m space --focus 4
+# ctrl - 5 : /opt/homebrew/bin/yabai -m space --focus 5
+# ctrl - 6 : /opt/homebrew/bin/yabai -m space --focus 6
+# ctrl - 7 : /opt/homebrew/bin/yabai -m space --focus 7
+
 # change window focus within space
 alt - j : /opt/homebrew/bin/yabai -m window --focus south
 alt - k : /opt/homebrew/bin/yabai -m window --focus north
@@ -7,6 +30,9 @@ alt - l : /opt/homebrew/bin/yabai -m window --focus east
 #change focus between external displays (left and right)
 alt - s: /opt/homebrew/bin/yabai -m display --focus west
 alt - g: /opt/homebrew/bin/yabai -m display --focus east
+
+# Different keybinding for full screen
+ctrl + shift - f      : /opt/homebrew/bin/yabai -m window --toggle native-fullscreen
 
 # rotate layout clockwise
 shift + alt - r : /opt/homebrew/bin/yabai -m space --rotate 270
@@ -77,3 +103,16 @@ shift + alt - b : /opt/homebrew/bin/yabai -m window --toggle float; /opt/homebre
 ctrl + alt - q : /opt/homebrew/bin/yabai --stop-service
 ctrl + alt - s : /opt/homebrew/bin/yabai --start-service
 ctrl + alt - r : /opt/homebrew/bin/yabai --restart-service
+
+# Application Shortcuts
+ctrl + fn - o : open ~
+ctrl + fn - t : open -na /Applications/Alacritty.app
+ctrl + fn - p : open "x-apple.systempreferences:"
+ctrl + fn - a : open -a "About This Mac"
+ctrl + fn - f : open -na /Applications/Firefox\ Developer\ Edition.app
+ctrl + fn - s : open -na /Applications/Safari.app/
+ctrl + fn - v : open -na /Applications/Visual\ Studio\ Code.app
+ctrl + fn - m : open -na /Applications/Spotify.app
+ctrl + fn - g : open -na /Applications/Signal.app
+ctrl + fn - w : open -na /Applications/WhatsApp.app
+

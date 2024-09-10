@@ -105,3 +105,14 @@ alias r='rails'
 alias bat='batcat'
 alias lzg='lazygit'
 alias lzd='lazydocker'
+
+# Change system dark mode
+alias td="osascript -e 'tell application \"System Events\"
+        tell appearance preferences
+        if get dark mode then
+          set dark mode to false
+        else
+          set dark mode to true
+        end if
+      end tell
+    end tell'"

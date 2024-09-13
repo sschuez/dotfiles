@@ -27,13 +27,19 @@ yabai -m config mouse_action1 move
 yabai -m config mouse_action2 resize
 
 # Default positions
-# Hey Email
-yabai -m rule --add app="^Hey$" space=1
-# Safari
-yaibai -m rule --add app="^Safari$" space=2
-# Firefox Developer Edition
+# Space 1
+yabai -m rule --add app="^Notion$" space=1
+# Space 2
+yabai -m rule --add app="^HEY$" space=2
+# Space 3
+yabai -m rule --add app="^Microsoft Outlook$" space=3
+yabai -m rule -add app="^Microsoft Teams$"
+# Space 4
+yabai -m rule --add app="^Telegram$" space=4
+yaibai -m rule --add app="^Safari$" space=4
+# Space 5
 yabai -m rule --add app="^Firefox Developer Edition$" space=5
-# Terminal
+# Space 6
 yabai -m rule --add app="^(Alacritty)$" space=6
 
 # when window is dropped in center of another window, swap them (on edges it will split it)

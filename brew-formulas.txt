@@ -35,6 +35,7 @@ gettext
 ghostscript
 giflib
 git
+git-filter-repo
 glib
 glib-networking
 gmp
@@ -170,6 +171,7 @@ python@3.12
 rav1e
 rbenv
 readline
+redis
 ripgrep
 rtmpdump
 rubberband

@@ -3,15 +3,18 @@ aribb24
 at-spi2-core
 autoconf
 autojump
+awscli
 bat
 brotli
 c-ares
 ca-certificates
 cairo
+cffi
 cfitsio
 cgif
 cjson
 cmake
+cryptography
 curl
 dav1d
 dbus
@@ -62,6 +65,7 @@ hicolor-icon-theme
 highway
 hwloc
 icu4c
+icu4c@75
 imagemagick
 imath
 isl
@@ -84,6 +88,7 @@ libb2
 libbluray
 libcuefile
 libde265
+libdeflate
 libdicom
 libepoxy
 libevent
@@ -103,6 +108,7 @@ libmatio
 libmicrohttpd
 libmpc
 libnghttp2
+libnice
 libogg
 libomp
 libpng
@@ -147,6 +153,7 @@ libxtst
 libyaml
 little-cms2
 llvm
+llvm@18
 lpeg
 lua
 luajit
@@ -195,8 +202,11 @@ postgresql@14
 postgresql@15
 pugixml
 py3cairo
+pycparser
 pygobject3
+python-packaging
 python@3.12
+python@3.13
 rav1e
 rbenv
 readline
@@ -206,6 +216,7 @@ rtmpdump
 rubberband
 ruby-build
 rust
+s3cmd
 sdl2
 shared-mime-info
 snappy

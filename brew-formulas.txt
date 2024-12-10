@@ -61,6 +61,7 @@ gtk4
 gum
 harfbuzz
 hdf5
+heroku
 hicolor-icon-theme
 highway
 hwloc
@@ -163,6 +164,7 @@ lzo
 m4
 make
 mbedtls
+mc
 mozjpeg
 mpdecimal
 mpfr

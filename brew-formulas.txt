@@ -29,6 +29,7 @@ fdk-aac
 ffmpeg
 ffmpeg@6
 fftw
+fish
 flac
 fontconfig
 freetype
@@ -65,8 +66,9 @@ heroku
 hicolor-icon-theme
 highway
 hwloc
-icu4c
+icu4c@74
 icu4c@75
+icu4c@76
 imagemagick
 imath
 isl
@@ -154,7 +156,6 @@ libxtst
 libyaml
 little-cms2
 llvm
-llvm@18
 lpeg
 lua
 luajit
@@ -198,6 +199,7 @@ pcre2
 pinentry
 pixman
 pkg-config
+pkgconf
 pmix
 poppler
 postgresql@14

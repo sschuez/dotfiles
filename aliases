@@ -39,12 +39,14 @@ alias gac='function _gac(){ git add . && git commit -m "$1"; };_gac'
 # Docker Development Environment Aliases
 alias dcu="rm -f tmp/pids/server.pid && docker compose up -d && docker compose logs -f"
 alias dcb="docker compose build"
+alias dcbb="docker compose build && docker compose run --rm app bundle install"
 alias dcbc="docker compose build --no-cache"
 alias dcd="docker compose down --remove-orphans"
 alias dcr="docker compose run --rm app"
 alias dcx="docker compose restart"
 alias dcs="docker compose stop"
 alias dce="docker compose exec app"
+alias dclean='docker system prune -f --volumes'
 
 # Kamal Aliases
 alias kl="kamal app logs -f"

@@ -1,6 +1,7 @@
 [colors]
 [colors.primary]
-background = '#1a1b26'
+# background = '#1a1b26' # Old, darker value
+background = '#222435'
 foreground = '#a9b1d6'
 
 # Normal colors

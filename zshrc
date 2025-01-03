@@ -6,10 +6,11 @@ export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export EDITOR='nvim'
 export THOR_MERGE="nvim -d"
+export DOCKER_BUILDKIT=1
 # export ANTHROPIC_API_KEY=$(op item get "Terminal API Keys" --field "ANTHROPIC_API_KEY")
 # export OPENAI_API_KEY=$(op item get "Terminal API Keys" --field "OPENAI_API_KEY")
-if [ -f ~/.dotfiles/zsh_env ]; then
-    source ~/.dotfiles/zsh_env
+if [ -f ~/code/dotfiles/zsh_env ]; then
+    source ~/code/dotfiles/zsh_env
 fi
 
 # Homebrew path

@@ -42,7 +42,7 @@ alias dcb="docker compose build"
 alias dcbb="docker compose build && docker compose run --rm app bundle install"
 alias dcbc="docker compose build --no-cache"
 alias dcd="docker compose down --remove-orphans"
-alias dcr="docker compose run --rm app"
+alias dcr="docker compose run --rm app" # For running e.g. bundle
 alias dcx="docker compose restart"
 alias dcs="docker compose stop"
 alias dce="docker compose exec app"
@@ -63,6 +63,13 @@ alias kd="kamal deploy"
 # alias sks="skhd --start-service"
 # alias skrs="skhd --restart-service"
 # alias skst="skhd --stop-service"
+
+# Sketchbar
+alias sb="sketchybar"
+alias sbst="brew services stop sketchybar"
+alias sbs="brew services start sketchybar"
+alias sbrs="brew services stop sketchybar && brew services start sketchybar"
+alias sbc="sketchybar --reload"
 
 # Directories
 alias ..='cd ..'

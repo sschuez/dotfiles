@@ -5,6 +5,7 @@ autoconf
 autojump
 awscli
 bat
+borders
 brotli
 c-ares
 ca-certificates
@@ -15,7 +16,6 @@ cgif
 cjson
 cmake
 cryptography
-curl
 dav1d
 dbus
 docker
@@ -67,8 +67,8 @@ hicolor-icon-theme
 highway
 hwloc
 icu4c@74
-icu4c@75
 icu4c@76
+icu4c@77
 imagemagick
 imath
 isl
@@ -187,7 +187,6 @@ openblas
 opencore-amr
 openexr
 openjpeg
-openldap
 openslide
 openssl@3
 openvino
@@ -197,8 +196,8 @@ p11-kit
 pango
 pcre2
 pinentry
+pipx
 pixman
-pkg-config
 pkgconf
 pmix
 poppler
@@ -223,6 +222,7 @@ rust
 s3cmd
 sdl2
 shared-mime-info
+sketchybar
 snappy
 speex
 sqlite
@@ -238,6 +238,7 @@ tree
 tree-sitter
 unbound
 unibilium
+utf8cpp
 utf8proc
 uthash
 vips

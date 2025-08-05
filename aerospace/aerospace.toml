@@ -222,6 +222,10 @@ if.app-id = 'org.mozilla.firefoxdeveloperedition'
 run = "move-node-to-workspace U"
 
 [[on-window-detected]]
+if.app-id = 'com.google.Chrome'
+run = "move-node-to-workspace U"
+
+[[on-window-detected]]
 if.app-id = 'com.apple.Safari'
 run = "move-node-to-workspace S"
 
@@ -246,6 +250,10 @@ if.app-id = 'com.openai.chat'
 run = "move-node-to-workspace C"
 
 [[on-window-detected]]
+if.app-id = 'com.anthropic.claudefordesktop'
+run = "move-node-to-workspace C"
+
+[[on-window-detected]]
 if.app-id = 'com.hey.app.desktop'
 run = "move-node-to-workspace 1"
 
@@ -259,11 +267,11 @@ run = "move-node-to-workspace 2"
 
 [[on-window-detected]]
 if.app-id = 'com.apple.iCal'
-run = "move-node-to-workspace 2"
+run = "move-node-to-workspace 3"
 
 [[on-window-detected]]
 if.app-id = 'com.microsoft.teams2'
-run = "move-node-to-workspace 3"
+run = "move-node-to-workspace T"
 
 [[on-window-detected]]
 if.app-id = 'net.whatsapp.WhatsApp'

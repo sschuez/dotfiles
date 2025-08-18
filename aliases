@@ -125,3 +125,6 @@ alias td="osascript -e 'tell application \"System Events\"
         end if
       end tell
     end tell'"
+
+# Multi agent setup with claude
+alias setup-agents='~/code/dotfiles/scripts/setup_multi_agent.sh'

@@ -246,6 +246,7 @@ utf8cpp
 utf8proc
 uthash
 vips
+watch
 webp
 x264
 x265

@@ -13,6 +13,9 @@ THEME_NAMES=(
   "Everforest Light"
   "Everforest Dark"
   "Jellybeans"
+  "Snow"
+  "Solarized"
+  "Milky Matcha"
   "Cancel"
 )
 
@@ -33,14 +36,6 @@ TMUX_THEME_CONF="$TMUX_THEME_DIR/${THEME}.conf"
 CURRENT_THEME_CONF="$HOME/code/dotfiles/tmux/.tmux.conf"
 ALACRITTY_THEME_DIR="$THEME_DIR/alacritty"
 ALACRITTY_THEME_CONF="$ALACRITTY_THEME_DIR/${THEME}.toml"
-
-# Function to apply the theme to iTerm2 using Python script -> currently not needed
-apply_iterm_theme() {
-  export THEME=$THEME
-  source ~/venvs/iterm2-env/bin/activate
-  python3 $HOME/code/dotfiles/scripts/change_color_theme.py
-  deactivate
-}
 
 # Apply theme to tmux
 apply_tmux_theme() {
@@ -79,11 +74,65 @@ apply_neovim_theme() {
   fi
 }
 
+# Function to get current system dark mode state
+get_system_dark_mode() {
+  osascript -e 'tell application "System Events" to tell appearance preferences to get dark mode'
+}
+
+# Function to set system dark mode
+set_system_dark_mode() {
+  local should_be_dark=$1
+  local current_dark_mode=$(get_system_dark_mode)
+
+  if [ "$should_be_dark" = "true" ] && [ "$current_dark_mode" = "false" ]; then
+    echo "Switching system to dark mode..."
+    osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to true'
+  elif [ "$should_be_dark" = "false" ] && [ "$current_dark_mode" = "true" ]; then
+    echo "Switching system to light mode..."
+    osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to false'
+  fi
+}
+
+# Function to determine if theme is dark or light
+is_dark_theme() {
+  case "$THEME" in
+  "catppuccin-latte" | "gruvbox-light" | "everforest-light" | "snow" | "milky-matcha" | "rose-pine" | "solarized")
+    return 1 # Light theme
+    ;;
+  *)
+    return 0 # Dark theme
+    ;;
+  esac
+}
+
+# Function to apply wallpaper based on theme
+apply_wallpaper() {
+  local wallpaper_dir="$THEME_DIR/wallpapers"
+  local wallpaper_jpg="$wallpaper_dir/${THEME}.jpg"
+  local wallpaper_png="$wallpaper_dir/${THEME}.png"
+
+  if [ -f "$wallpaper_jpg" ]; then
+    echo "Applying wallpaper for theme: $THEME"
+    osascript -e "tell application \"Finder\" to set desktop picture to POSIX file \"$wallpaper_jpg\""
+  elif [ -f "$wallpaper_png" ]; then
+    echo "Applying wallpaper for theme: $THEME"
+    osascript -e "tell application \"Finder\" to set desktop picture to POSIX file \"$wallpaper_png\""
+  fi
+}
+
 # Apply the selected theme
 # apply_iterm_theme
 apply_tmux_theme
 apply_alacritty_theme
 apply_neovim_theme
+apply_wallpaper
+
+# Auto-switch system dark mode based on theme
+if is_dark_theme; then
+  set_system_dark_mode "true"
+else
+  set_system_dark_mode "false"
+fi
 
 echo "Theme applied: $THEME"
 tmux source-file "$CURRENT_THEME_CONF"

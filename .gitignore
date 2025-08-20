@@ -1,2 +1,5 @@
 api_keys
+backup/
+*_env
+*.env
 

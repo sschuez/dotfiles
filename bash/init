@@ -1,0 +1,50 @@
+# Modern tool integrations
+
+# Mise (replaces nvm, pyenv, rbenv with a single tool)
+if command -v mise &> /dev/null; then
+  eval "$(mise activate bash)" 2>/dev/null
+else
+  # Fallback to individual version managers if mise not available
+  # Node Version Manager (nvm)
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+  # Python Environment (pyenv) 
+  if command -v pyenv >/dev/null 2>&1; then
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init - 2>/dev/null)"
+  fi
+fi
+
+# Zoxide (better cd)
+if command -v zoxide &> /dev/null; then
+  eval "$(zoxide init bash)" 2>/dev/null
+fi
+
+# FZF (fuzzy finder)
+if command -v fzf &> /dev/null; then
+  # Try Homebrew locations first
+  if [[ -f "/opt/homebrew/opt/fzf/shell/completion.bash" ]]; then
+    source "/opt/homebrew/opt/fzf/shell/completion.bash"
+  fi
+  if [[ -f "/opt/homebrew/opt/fzf/shell/key-bindings.bash" ]]; then
+    source "/opt/homebrew/opt/fzf/shell/key-bindings.bash"
+  fi
+fi
+
+# SSH Agent setup (from original config)
+SSH_ENV="$HOME/.ssh/environment"
+function start_agent {
+    echo "Initializing new SSH agent..."
+    /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+    chmod 600 "${SSH_ENV}"
+    . "${SSH_ENV}" > /dev/null
+    /usr/bin/ssh-add
+}
+
+if [ -f "${SSH_ENV}" ]; then
+    . "${SSH_ENV}" > /dev/null
+    ps -ef | grep "${SSH_AGENT_PID}" | grep ssh-agent$ > /dev/null || start_agent;
+else
+    start_agent;
+fi

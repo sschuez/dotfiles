@@ -1,0 +1,20 @@
+# History control
+shopt -s histappend
+HISTCONTROL=ignoreboth
+HISTSIZE=32768
+HISTFILESIZE="${HISTSIZE}"
+
+# Autocompletion
+if [ -z "${BASH_COMPLETION_VERSINFO:-}" ]; then
+  # Try Homebrew bash completion first
+  if [ -r "/opt/homebrew/etc/profile.d/bash_completion.sh" ]; then
+    source "/opt/homebrew/etc/profile.d/bash_completion.sh"
+  # Fallback to system bash completion
+  elif [ -f /usr/share/bash-completion/bash_completion ]; then
+    source /usr/share/bash-completion/bash_completion
+  fi
+fi
+
+# Set complete path
+export PATH="./bin:$HOME/.local/bin:$PATH"
+set +h

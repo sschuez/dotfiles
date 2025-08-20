@@ -1,0 +1,129 @@
+# File system
+alias ls='eza -lh --group-directories-first --icons=auto'
+alias lsa='ls -a'
+alias lt='eza --tree --level=2 --long --icons --git'
+alias lta='lt -a'
+alias ff="fzf --preview 'bat --style=numbers --color=always {}'"
+alias cd="zd"
+zd() {
+  if [ $# -eq 0 ]; then
+    builtin cd ~ && return
+  elif [ -d "$1" ]; then
+    builtin cd "$1"
+  else
+    z "$@" && printf " \U000F17A9 " && pwd || echo "Error: Directory not found"
+  fi
+}
+# macOS equivalent of xdg-open
+open() {
+  command open "$@" >/dev/null 2>&1 &
+}
+
+# Directories
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+# Tools
+alias g='git'
+alias d='docker'
+alias r='rails'
+n() { if [ "$#" -eq 0 ]; then nvim .; else nvim "$@"; fi; }
+
+# Git
+alias gcm='git commit -m'
+alias gcam='git commit -a -m'
+alias gcad='git commit -a --amend'
+alias gacp='function _gacp(){ git add . && git commit -m "$1" && git push; };_gacp'
+alias gac='function _gac(){ git add . && git commit -m "$1"; };_gac'
+
+# Network & System
+alias ip="curl ipinfo.io/ip"
+alias ips="ifconfig -a | perl -nle'/(\d+\.\d+\.\d+\.\d+)/ && print $1'"
+alias speedtest="wget -O /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip"
+alias serve='ruby -run -e httpd . -p 8000'
+
+# Bundle shortcuts
+alias be='bundle exec'
+alias bi='bundle install'
+
+# Theme management
+alias theme="$HOME/code/dotfiles/scripts/apply_theme.sh"
+alias th="$HOME/code/dotfiles/scripts/apply_theme.sh"
+alias font="$HOME/code/dotfiles/scripts/apply_font.sh"
+alias ft="$HOME/code/dotfiles/scripts/apply_font.sh"
+alias fontsize="$HOME/code/dotfiles/scripts/apply_font_size.sh"
+alias fs="$HOME/code/dotfiles/scripts/apply_font_size.sh"
+alias fs+="$HOME/code/dotfiles/scripts/change_font_size.sh increment"
+alias fs-="$HOME/code/dotfiles/scripts/change_font_size.sh decrement"
+alias flg="$HOME/code/dotfiles/scripts/change_font_size.sh increment"
+alias fsm="$HOME/code/dotfiles/scripts/change_font_size.sh decrement"
+
+# Tmux
+alias tx='if ! tmux has-session 2>/dev/null; then tmux new-session -d; fi && tmux source-file ~/.tmux.conf && tmux'
+alias tmux='if ! tmux has-session 2>/dev/null; then tmux new-session -d; fi && tmux source-file ~/.tmux.conf && tmux'
+alias ta='tmux attach-session'
+alias tk='if tmux has-session 2>/dev/null; then tmux kill-session -a; fi'
+alias ts='tmux attach-session -t server || tmux new -s server'
+
+# Docker
+alias dcu="rm -f tmp/pids/server.pid && docker compose up -d && docker compose logs -f"
+alias dcb="docker compose build"
+alias dcbb="docker compose build && docker compose run --rm app bundle install"
+alias dcbc="docker compose build --no-cache"
+alias dcd="docker compose down --remove-orphans"
+alias dcr="docker compose run --rm app"
+alias dcx="docker compose restart"
+alias dcs="docker compose stop"
+alias dce="docker compose exec app"
+alias dclean='docker system prune -f --volumes'
+
+# Kamal
+alias kl="kamal app logs -f"
+alias kc="kamal app exec -i 'bin/rails console'"
+alias krd="kamal redeploy"
+alias kd="kamal deploy"
+
+# Project directories  
+alias proj='cd ~/code/projects'
+alias sub='cd ~/code/submissio/submissio'
+alias dot='cd ~/code/dotfiles'
+alias vimconf='cd ~/.config/nvim'
+alias doc='cd ~/Desktop/docs/'
+
+# Additional tools
+alias vim='nvim'
+alias bat='batcat'
+alias lzg='lazygit'
+alias lzd='lazydocker'
+
+# System
+alias td="osascript -e 'tell application \"System Events\"
+        tell appearance preferences
+        if get dark mode then
+          set dark mode to false
+        else
+          set dark mode to true
+        end if
+      end tell
+    end tell'"
+
+# Multi agent setup
+alias setup-agents='~/code/dotfiles/scripts/setup_multi_agent.sh'
+alias setup-agent='~/code/dotfiles/scripts/setup-agent.sh'
+
+# Git worktree management
+alias agents='git worktree list'
+alias agents-status='git worktree list && echo "" && git branch -vv | grep "feature/"'
+alias agent-remove='git worktree remove'
+alias agent-cleanup='git worktree prune && git branch -d $(git branch | grep "feature/" | xargs)'
+
+# Brew helpers
+brew_install_update() {
+    brew install "$@" && echo "Updating brew list..." && ~/code/dotfiles/scripts/update_brews.sh
+}
+alias bri='brew_install_update'
+brew_install_cask_update() {
+    brew install --cask "$@" && echo "Updating brew list..." && ~/code/dotfiles/scripts/update_brews.sh
+}
+alias bric='brew_install_cask_update'

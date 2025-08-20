@@ -86,9 +86,9 @@ alias kd="kamal deploy"
 
 # Project directories  
 alias proj='cd ~/code/projects'
-alias sub='cd ~/code/submissio/submissio'
-alias dot='cd ~/code/dotfiles'
-alias vimconf='cd ~/.config/nvim'
+alias sub='cd ~/code/submissio/submissio && nvim .'
+alias dot='cd ~/code/dotfiles && nvim .'
+alias vimconf='cd ~/.config/nvim && nvim .'
 alias doc='cd ~/Desktop/docs/'
 
 # Additional tools

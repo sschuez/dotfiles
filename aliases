@@ -13,9 +13,8 @@ alias bi='bundle install'
 # Alias to change color themes
 alias theme="$HOME/code/dotfiles/scripts/apply_theme.sh"
 alias th="$HOME/code/dotfiles/scripts/apply_theme.sh"
-alias vim='nvim'
 
-# Alias to chenge font
+# Alias to change font
 alias font="$HOME/code/dotfiles/scripts/apply_font.sh"
 alias ft="$HOME/code/dotfiles/scripts/apply_font.sh"
 alias fontsize="$HOME/code/dotfiles/scripts/apply_font_size.sh"
@@ -54,23 +53,6 @@ alias kc="kamal app exec -i 'bin/rails console'"
 alias krd="kamal redeploy"
 alias kd="kamal deploy"
 
-# # Yabai Aliases
-# alias ys="yabai --start-service && skhd --start-service"
-# alias yrs="yabai --restart-service && skhd --restart-service"
-# alias yst="yabai --stop-service && skhd --stop-service"
-
-# # Skhd Aliases
-# alias sks="skhd --start-service"
-# alias skrs="skhd --restart-service"
-# alias skst="skhd --stop-service"
-
-# Sketchbar
-alias sb="sketchybar"
-alias sbst="brew services stop sketchybar"
-alias sbs="brew services start sketchybar"
-alias sbrs="brew services stop sketchybar && brew services start sketchybar"
-alias sbc="sketchybar --reload"
-
 # Directories
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -91,6 +73,7 @@ alias fd='fdfind'
 alias cd='z'
 
 # Tools
+alias vim='nvim'
 alias n='nvim'
 alias g='git'
 alias d='docker'
@@ -128,3 +111,10 @@ alias td="osascript -e 'tell application \"System Events\"
 
 # Multi agent setup with claude
 alias setup-agents='~/code/dotfiles/scripts/setup_multi_agent.sh'
+alias setup-agent='~/code/dotfiles/scripts/setup-agent.sh'
+
+# Git worktree management
+alias agents='git worktree list'
+alias agents-status='git worktree list && echo "" && git branch -vv | grep "feature/"'
+alias agent-remove='git worktree remove'
+alias agent-cleanup='git worktree prune && git branch -d $(git branch | grep "feature/" | xargs)'

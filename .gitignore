@@ -1,5 +1,5 @@
 api_keys
-backup/
+backup/zsh/zsh_env
 *_env
 *.env
 

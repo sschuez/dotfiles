@@ -92,14 +92,14 @@ fi
 # Install essential tools if not present
 echo "Installing essential tools..."
 tools_to_install=(
-  "eza"       # Modern ls replacement
-  "bat"       # Better cat
-  "fzf"       # Fuzzy finder
-  "ripgrep"   # Better grep
-  "zoxide"    # Smart cd
-  "git"       # Version control
-  "neovim"    # Text editor
-  "tmux"      # Terminal multiplexer
+  "eza"                       # Modern ls replacement
+  "bat"                       # Better cat
+  "fzf"                       # Fuzzy finder
+  "ripgrep"                   # Better grep
+  "zoxide"                    # Smart cd
+  "git"                       # Version control
+  "neovim"                    # Text editor
+  "tmux"                      # Terminal multiplexer
   "nikitabobko/tap/aerospace" # Tiling window manager
 )
 
@@ -125,4 +125,3 @@ echo "   - Unified aliases and functions"
 echo "   - API keys preserved in api_keys file"
 echo ""
 echo "Enjoy your minimal, fast bash setup! 🚀"
-

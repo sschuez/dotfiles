@@ -3,7 +3,16 @@ TERM = "xterm-256color"
 
 [shell]
 program = "/opt/homebrew/bin/bash"
-args = ["--login"]
+# Auto-start tmux on Alacritty launch (attaches to 'main' session or creates it)
+args = [
+  "--login",
+  "-c",
+  "tmux attach-session -t main 2>/dev/null || tmux new-session -s main",
+]
+# Always create a new tmux session (auto-numbered by tmux)
+# args = ["--login", "-c", "tmux new-session"]
+# Regular shell without tmux (uncomment to disable auto-tmux)
+# args = ["--login"]
 
 [window]
 padding.x = 10
@@ -12,4 +21,6 @@ decorations = "Buttonless"
 opacity = 0.98
 
 # [keyboard]
-# bindings = [{ key = "F11", action = "ToggleFullscreen" }]
+# bindings = [
+#   { key = "F11", action = "ToggleFullscreen" },
+# ]

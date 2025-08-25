@@ -30,9 +30,9 @@ if [ -d "$WORKTREE_DIR" ]; then
 fi
 
 # Create the worktree with new branch
-BRANCH_NAME="feature/${CLEAN_NAME}"
+BRANCH_NAME="feat/${CLEAN_NAME}"
 echo "🌿 Creating branch: $BRANCH_NAME"
-git worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR" HEAD
+git worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR" "$CURRENT_BRANCH"
 
 echo "✅ Worktree created at: $WORKTREE_DIR"
 

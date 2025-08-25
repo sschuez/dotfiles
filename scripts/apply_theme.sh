@@ -2,20 +2,22 @@
 
 # Define available themes
 THEME_NAMES=(
-  "Tokyo Night"
-  "Catppuccin Mocha"
   "Catppuccin Latte"
-  "Nord"
+  "Catppuccin Mocha"
+  "Everforest Dark"
+  "Everforest Light"
   "Gruvbox"
   "Gruvbox Light"
-  "Kanagawa"
-  "Rose Pine"
-  "Everforest Light"
-  "Everforest Dark"
   "Jellybeans"
+  "Kanagawa"
+  "Matte Black"
+  "Milky Matcha"
+  "Nord"
+  "Ristretto"
+  "Rose Pine"
   "Snow"
   "Solarized"
-  "Milky Matcha"
+  "Tokyo Night"
   "Cancel"
 )
 
@@ -40,13 +42,8 @@ ALACRITTY_THEME_CONF="$ALACRITTY_THEME_DIR/${THEME}.toml"
 # Apply theme to tmux
 apply_tmux_theme() {
   if [ -f "$TMUX_THEME_CONF" ]; then
-    # Replace the last line in the tmux config with the new theme's source file reference
-    sed -i '' '$ d' "$CURRENT_THEME_CONF"
-    echo "source-file \"$TMUX_THEME_CONF\"" >>"$CURRENT_THEME_CONF"
-
-    # Reload tmux configuration
-    tmux source-file "$CURRENT_THEME_CONF"
-
+    # Generate new tmux.conf with theme colors
+    "$HOME/code/dotfiles/scripts/generate_tmux_conf.sh" "$TMUX_THEME_CONF"
     echo "Applied tmux theme: $THEME"
   else
     echo "tmux theme configuration file for '$THEME' not found."
@@ -135,5 +132,4 @@ else
 fi
 
 echo "Theme applied: $THEME"
-tmux source-file "$CURRENT_THEME_CONF"
 echo "Restart your terminal for a full theme change."

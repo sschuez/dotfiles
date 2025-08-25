@@ -61,8 +61,9 @@ alias fsm="$HOME/code/dotfiles/scripts/change_font_size.sh decrement"
 
 # Tmux
 alias tx='if ! tmux has-session 2>/dev/null; then tmux new-session -d; fi && tmux source-file ~/.tmux.conf && tmux'
-alias tmux='if ! tmux has-session 2>/dev/null; then tmux new-session -d; fi && tmux source-file ~/.tmux.conf && tmux'
-alias ta='tmux attach-session'
+# Commented out - this alias causes issues with tmux commands
+# alias tmux='if ! tmux has-session 2>/dev/null; then tmux new-session -d; fi && tmux source-file ~/.tmux.conf && tmux'
+alias ta='tmux attach-session -t main 2>/dev/null || tmux new-session -s main'
 alias tk='if tmux has-session 2>/dev/null; then tmux kill-session -a; fi'
 alias ts='tmux attach-session -t server || tmux new -s server'
 
@@ -114,9 +115,9 @@ alias setup-agent='~/code/dotfiles/scripts/setup-agent.sh'
 
 # Git worktree management
 alias agents='git worktree list'
-alias agents-status='git worktree list && echo "" && git branch -vv | grep "feature/"'
+alias agents-status='git worktree list && echo "" && git branch -vv | grep -E "(feat/|fix/|chore/)"'
 alias agent-remove='git worktree remove'
-alias agent-cleanup='git worktree prune && git branch -d $(git branch | grep "feature/" | xargs)'
+alias agent-cleanup='~/code/dotfiles/scripts/agent-cleanup.sh'
 
 # Brew helpers
 brew_install_update() {

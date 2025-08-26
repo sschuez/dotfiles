@@ -1,15 +1,28 @@
 #!/bin/bash
 set -e
 
-# Check if arguments provided
-if [ $# -eq 0 ]; then
-    echo "Usage: setup-agent <worktree-name>"
+# Parse arguments
+NO_DOCKER=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --no-docker)
+            NO_DOCKER=true
+            shift
+            ;;
+        *)
+            WORKTREE_NAME="$1"
+            shift
+            ;;
+    esac
+done
+
+# Check if worktree name provided
+if [ -z "$WORKTREE_NAME" ]; then
+    echo "Usage: setup-agent <worktree-name> [--no-docker]"
     echo "Example: setup-agent backend-feature"
+    echo "         setup-agent ui-fixes --no-docker"
     exit 1
 fi
-
-# Get worktree name (will also be branch name)
-WORKTREE_NAME="$1"
 
 # Clean name for branches/directories
 CLEAN_NAME=$(echo "$WORKTREE_NAME" | sed 's/[^a-zA-Z0-9-]/-/g' | tr '[:upper:]' '[:lower:]')
@@ -35,6 +48,72 @@ echo "🌿 Creating branch: $BRANCH_NAME"
 git worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR" "$CURRENT_BRANCH"
 
 echo "✅ Worktree created at: $WORKTREE_DIR"
+
+# Auto-setup Docker environment if bin/docker-env exists
+if [ "$NO_DOCKER" = false ] && [ -f "bin/docker-env" ]; then
+    echo ""
+    echo "🐳 Setting up Docker environment..."
+    
+    # Function to check if port is in use (by Docker or system)
+    is_port_in_use() {
+        local port=$1
+        # Check Docker containers
+        docker ps --format "table {{.Ports}}" 2>/dev/null | grep -q ":${port}->" && return 0
+        # Check system (macOS)
+        lsof -iTCP:${port} -sTCP:LISTEN &>/dev/null && return 0
+        return 1
+    }
+    
+    # Function to find next available port starting from base
+    find_next_port() {
+        local base_port=$1
+        local port=$base_port
+        local max_attempts=20
+        local attempt=0
+        
+        while [ $attempt -lt $max_attempts ]; do
+            if ! is_port_in_use $port; then
+                echo $port
+                return 0
+            fi
+            ((port++))
+            ((attempt++))
+        done
+        
+        echo $base_port  # Fallback
+        return 1
+    }
+    
+    # Find next available ports
+    # Start from 3001 for agent worktrees (3000 is reserved for main)
+    APP_PORT=$(find_next_port 3001)
+    CHROME_PORT=$((APP_PORT + 3900))  # Keep the 3900 offset convention
+    
+    # Check if Chrome port is also available, if not, find another pair
+    while is_port_in_use $CHROME_PORT; do
+        ((APP_PORT++))
+        APP_PORT=$(find_next_port $APP_PORT)
+        CHROME_PORT=$((APP_PORT + 3900))
+    done
+    
+    echo "  📍 Found available ports: $APP_PORT (app), $CHROME_PORT (Chrome)"
+    
+    # Change to worktree directory and setup Docker env
+    (
+        cd "$WORKTREE_DIR"
+        if [ -f "bin/docker-env" ]; then
+            echo "  🔧 Running: bin/docker-env setup $CLEAN_NAME $APP_PORT"
+            bin/docker-env setup "$CLEAN_NAME" "$APP_PORT"
+            echo "  ✅ Docker environment configured!"
+            echo ""
+            echo "  Access points:"
+            echo "    App: http://localhost:$APP_PORT"
+            echo "    Chrome NoVNC: http://localhost:$CHROME_PORT"
+        else
+            echo "  ⚠️  bin/docker-env not found in worktree"
+        fi
+    )
+fi
 
 # Open new window/tab
 if command -v tmux &> /dev/null && [ -n "$TMUX" ]; then

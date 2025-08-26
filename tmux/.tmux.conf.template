@@ -138,8 +138,7 @@ setw -g window-status-style fg="COLOR_WINDOW_FG",bg="COLOR_WINDOW_BG",none
 
 # statusline
 set -g status-left ""
-set -g status-right "#{?client_prefix,#[fg=COLOR_WARNING_FG],#[fg=COLOR_OKAY_FG]}#[bg=COLOR_WINDOW_STATUS_BG]#{?client_prefix,#[bg=COLOR_WARNING_FG],#[bg=COLOR_OKAY_FG]}#[fg=COLOR_BG] #[fg=COLOR_WINDOW_FG,bg=COLOR_WINDOW_STATUS_BG] #S "
-
+set -g status-right "#{?client_prefix,#[fg=COLOR_WARNING_FG],#[fg=COLOR_OKAY_FG]}#[bg=default]#{?client_prefix,#[bg=COLOR_WARNING_FG],#[bg=COLOR_OKAY_FG]}#[fg=COLOR_BG] #[fg=COLOR_WINDOW_FG,bg=COLOR_WINDOW_STATUS_BG] #S "
 
 # current_dir
 setw -g window-status-format "#[fg=COLOR_WINDOW_FG,bg=COLOR_CURRENT_DIR_BG] #I #[fg=COLOR_WINDOW_FG,bg=COLOR_MESSAGE_BG] #W "

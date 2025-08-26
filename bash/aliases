@@ -67,6 +67,13 @@ alias ta='tmux attach-session -t main 2>/dev/null || tmux new-session -s main'
 alias tk='if tmux has-session 2>/dev/null; then tmux kill-session -a; fi'
 alias ts='tmux attach-session -t server || tmux new -s server'
 
+# Tmux background session management (keeps server warm for faster startup)
+alias tbg='tmux list-sessions | grep -q "_bg" && echo "Background session active ✓" || echo "No background session"'
+alias tbg-start='~/code/dotfiles/scripts/tmux-background.sh'
+alias tbg-stop='tmux kill-session -t _bg 2>/dev/null && echo "Stopped background session" || echo "No background session to stop"'
+alias tbg-restart='tbg-stop && sleep 1 && tbg-start'
+alias tls='tmux list-sessions 2>/dev/null || echo "No tmux sessions"'
+
 # Docker
 alias dcu="rm -f tmp/pids/server.pid && docker compose up -d && docker compose logs -f"
 alias dcb="docker compose build"
@@ -97,6 +104,7 @@ alias vim='nvim'
 alias bat='batcat'
 alias lzg='lazygit'
 alias lzd='lazydocker'
+alias c='claude'
 
 # System
 alias td="osascript -e 'tell application \"System Events\"

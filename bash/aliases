@@ -63,7 +63,7 @@ alias fsm="$HOME/code/dotfiles/scripts/change_font_size.sh decrement"
 alias tx='if ! tmux has-session 2>/dev/null; then tmux new-session -d; fi && tmux source-file ~/.tmux.conf && tmux'
 # Commented out - this alias causes issues with tmux commands
 # alias tmux='if ! tmux has-session 2>/dev/null; then tmux new-session -d; fi && tmux source-file ~/.tmux.conf && tmux'
-alias ta='tmux attach-session -t main 2>/dev/null || tmux new-session -s main'
+alias ta='tmux attach-session -t $(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep -v "^_bg$" | head -n1) 2>/dev/null || tmux new-session -s main'
 alias tk='if tmux has-session 2>/dev/null; then tmux kill-session -a; fi'
 alias ts='tmux attach-session -t server || tmux new -s server'
 

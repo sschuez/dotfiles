@@ -93,6 +93,7 @@ dotfiles/
 - `dcb` - Docker compose build
 - `kl` - Kamal logs
 - `be` - Bundle exec
+- `setup-agent <name>` - Create worktree with auto Docker setup (see below)
 
 ### Navigation
 
@@ -164,4 +165,77 @@ If migrating from rbenv to mise for Ruby version management:
    ```
 
 The dotfiles already handle mise as the primary version manager with automatic fallback to individual tools.
+
+## Git Worktree & Docker Agent Setup
+
+The `setup-agent` script creates isolated development environments for AI agents or parallel development work. Each environment gets its own git worktree and Docker containers.
+
+### Quick Usage
+
+```bash
+# From any git repository (e.g., submissio)
+setup-agent feature-auth      # Creates worktree + auto Docker setup
+setup-agent bug-fix --no-docker  # Creates worktree only (skip Docker)
+```
+
+### What it does
+
+1. **Creates a git worktree** with branch `feat/<name>` in `../<repo>-<name>/`
+2. **Auto-detects Docker setup** - if `bin/docker-env` exists in the repo
+3. **Finds available ports** automatically (checks Docker & system)
+4. **Configures isolated Docker** environment with unique containers/volumes
+5. **Opens new tmux/iTerm window** for immediate work
+
+### Port Allocation
+
+The script intelligently finds free ports:
+- **Main worktree**: Always uses 3000 (app) / 7900 (Chrome)
+- **Agent worktrees**: Auto-increments from 3001/7901, 3002/7902, etc.
+- **Conflict detection**: Checks both Docker containers and system ports
+
+### Example Workflow
+
+```bash
+# In main submissio directory
+setup-agent payments-feature
+
+# Output:
+🤖 Creating worktree: payments-feature
+📂 From branch: develop
+🌿 Creating branch: feat/payments-feature
+✅ Worktree created at: ../submissio-payments-feature
+
+🐳 Setting up Docker environment...
+📍 Found available ports: 3001 (app), 7901 (Chrome)
+🔧 Running: bin/docker-env setup payments-feature 3001
+✅ Docker environment configured!
+
+Access points:
+  App: http://localhost:3001
+  Chrome NoVNC: http://localhost:7901
+```
+
+### Managing Worktrees
+
+```bash
+# List all worktrees
+git worktree list
+
+# Remove worktree when done
+git worktree remove ../submissio-payments-feature --force
+git branch -d feat/payments-feature
+```
+
+### Docker Environment Management
+
+If the repository has Docker environments (like submissio):
+
+```bash
+# In the worktree directory
+bin/docker-env list      # See all Docker environments
+bin/docker-env current   # Check current config
+bin/docker-env clean feature-old  # Clean up old environment
+```
+
+This setup allows multiple Claude agents or developers to work on different features simultaneously without any Docker conflicts or port collisions.
 

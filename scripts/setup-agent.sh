@@ -102,6 +102,11 @@ if [ "$NO_DOCKER" = false ] && [ -f "bin/docker-env" ]; then
     (
         cd "$WORKTREE_DIR"
         if [ -f "bin/docker-env" ]; then
+            # Fix potential missing esac in docker-env script
+            if ! tail -1 bin/docker-env | grep -q "esac"; then
+                echo "  🔧 Fixing bin/docker-env script..."
+                echo "esac" >> bin/docker-env
+            fi
             echo "  🔧 Running: bin/docker-env setup $CLEAN_NAME $APP_PORT"
             bin/docker-env setup "$CLEAN_NAME" "$APP_PORT"
             echo "  ✅ Docker environment configured!"

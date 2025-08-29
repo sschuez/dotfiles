@@ -3,6 +3,8 @@
 # Mise (replaces nvm, pyenv, rbenv with a single tool)
 if command -v mise &> /dev/null; then
   eval "$(mise activate bash)" 2>/dev/null
+  # Ensure mise shims are at the beginning of PATH to override system binaries
+  export PATH="$HOME/.local/share/mise/shims:$PATH"
 else
   # Fallback to individual version managers if mise not available
   # Node Version Manager (nvm)

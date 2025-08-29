@@ -27,7 +27,8 @@ alias ....='cd ../../..'
 # Tools
 alias g='git'
 alias d='docker'
-alias r='rails'
+alias r='mise exec -- rails'
+alias rails='mise exec -- rails'
 n() { if [ "$#" -eq 0 ]; then nvim .; else nvim "$@"; fi; }
 
 # Git
@@ -95,6 +96,7 @@ alias kd="kamal deploy"
 # Project directories  
 alias proj='cd ~/code/projects'
 alias sub='cd ~/code/submissio/submissio && nvim .'
+alias subc='cd ~/code/submissio/claude/submissio_claude && nvim .'
 alias dot='cd ~/code/dotfiles && nvim .'
 alias vimconf='cd ~/.config/nvim && nvim .'
 alias doc='cd ~/Desktop/docs/'

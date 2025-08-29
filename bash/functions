@@ -23,3 +23,23 @@ update_tmux_window_name() {
     tmux rename-window "$(basename "$PWD")"
   fi
 }
+
+# Agent cleanup function that handles directory changes properly
+agent-cleanup() {
+  # Store the main worktree path before running the script
+  local main_worktree=$(git worktree list 2>/dev/null | head -n1 | awk '{print $1}')
+  
+  # Run the actual cleanup script
+  ~/code/dotfiles/scripts/agent-cleanup.sh "$@"
+  
+  # If we're in a non-existent directory after cleanup, switch to main
+  if [ ! -d "$PWD" ]; then
+    if [ -n "$main_worktree" ] && [ -d "$main_worktree" ]; then
+      cd "$main_worktree"
+      echo "📍 Switched to main worktree: $main_worktree"
+    else
+      cd ~
+      echo "📍 Switched to home directory"
+    fi
+  fi
+}

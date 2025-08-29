@@ -19,6 +19,59 @@ get_main_branch() {
   fi
 }
 
+# Auto-detect project name from directory or git remote (same as bin/docker-env)
+get_project_name() {
+  # First try to get from git remote origin
+  local git_name=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git$#\1#p' | tr '[:upper:]' '[:lower:]' | tr '-' '_')
+  
+  # Fallback to current directory name
+  if [[ -z "$git_name" ]]; then
+    git_name=$(basename "$PWD" | tr '[:upper:]' '[:lower:]' | tr '-' '_')
+  fi
+  
+  # Clean up any special characters
+  echo "$git_name" | sed 's/[^a-z0-9_]/_/g'
+}
+
+# Function to check if bin/docker-env exists and clean Docker environment
+clean_docker_env() {
+  local worktree_path="$1"
+  local branch_name="$2"
+  
+  # Extract clean name from branch (feat/xyz -> xyz)
+  local clean_name=$(echo "$branch_name" | sed 's#feat/##' | sed 's/[^a-zA-Z0-9-]/-/g')
+  
+  if [[ -z "$clean_name" ]]; then
+    return
+  fi
+  
+  # Check if docker-env exists in the worktree or main repo
+  local docker_env_script=""
+  if [[ -f "$worktree_path/bin/docker-env" ]]; then
+    docker_env_script="$worktree_path/bin/docker-env"
+  elif [[ -f "$MAIN_WORKTREE/bin/docker-env" ]]; then
+    docker_env_script="$MAIN_WORKTREE/bin/docker-env"
+  fi
+  
+  if [[ -n "$docker_env_script" ]]; then
+    local project_name=$(get_project_name)
+    local docker_project="${project_name}_${clean_name//-/_}"
+    
+    # Check if this Docker environment exists
+    if docker ps -a --format "{{.Names}}" | grep -q "^${docker_project}_"; then
+      gum style --foreground 117 "  🐳 Cleaning Docker environment: $docker_project"
+      
+      # Stop and remove containers
+      docker compose -p "${docker_project}" down -v 2>/dev/null || true
+      
+      # Remove any lingering volumes
+      docker volume ls --format "{{.Name}}" | grep "^${docker_project}_" | xargs -r docker volume rm 2>/dev/null || true
+      
+      gum style --foreground 82 "  ✅ Docker environment cleaned"
+    fi
+  fi
+}
+
 # Check if we're in a git repository
 if ! git rev-parse --git-dir >/dev/null 2>&1; then
   gum style --foreground 196 "❌ Not in a git repository"
@@ -80,18 +133,21 @@ if [ $# -gt 0 ]; then
 
   # Show what we're about to do
   gum style --border double --border-foreground 212 --padding "1 2" \
-    "$(gum style --foreground 212 --bold 'Worktree Removal')" \
+    "$(gum style --foreground 212 --bold 'Agent Cleanup')" \
     "" \
     "$(gum style --foreground 117 "Path:   $worktree_path")" \
     "$(gum style --foreground 117 "Branch: $branch_name")"
 
   # Confirm removal
-  if gum confirm "Remove this worktree?"; then
+  if gum confirm "Remove this agent (worktree + Docker + branch)?"; then
     # Check if we're currently in the worktree we're trying to remove
     if [ "$PWD" = "$worktree_path" ] || [[ "$PWD" == "$worktree_path"/* ]]; then
       gum style --foreground 214 "⚠️  Switching to main worktree..."
       cd "$MAIN_WORKTREE"
     fi
+
+    # Clean Docker environment first (while we still have the path)
+    clean_docker_env "$worktree_path" "$branch_name"
 
     # Remove the worktree
     gum spin --spinner dot --title "Removing worktree..." -- git worktree remove "$worktree_path" --force
@@ -151,9 +207,11 @@ else
 
   # Show header
   gum style --border double --border-foreground 212 --padding "1 2" --margin "1 0" \
-    "$(gum style --foreground 212 --bold 'Git Worktree Cleanup')" \
+    "$(gum style --foreground 212 --bold 'Agent Cleanup')" \
     "" \
-    "$(gum style --foreground 245 'Select worktrees to remove (space to select, enter to confirm)')"
+    "$(gum style --foreground 245 'Select agents to remove (worktree + Docker + branch)')" \
+    "" \
+    "$(gum style --foreground 245 'Use space to select, enter to confirm')"
 
   # Let user select multiple worktrees
   selected_indices=$(gum choose --no-limit --cursor="▶ " --height=10 \
@@ -196,6 +254,9 @@ else
       cd "$MAIN_WORKTREE"
     fi
 
+    # Clean Docker environment first (while we still have the path)
+    clean_docker_env "$worktree_path" "$branch_name"
+
     # Remove the worktree
     gum spin --spinner dot --title "  Removing worktree..." -- git worktree remove "$worktree_path" --force
     gum style --foreground 82 "  ✅ Worktree removed"
@@ -232,5 +293,19 @@ fi
 
 # Clean up any prunable worktrees
 git worktree prune
-gum style --margin "1 0" --foreground 82 --bold "✨ Cleanup complete!"
+
+# Also clean up any dangling Docker images/volumes
+if command -v docker &>/dev/null; then
+  gum style --foreground 117 "Cleaning up Docker system..."
+  docker image prune -f 2>/dev/null || true
+  docker volume prune -f 2>/dev/null || true
+fi
+
+# Ensure we're in a valid directory at the end
+if [ ! -d "$PWD" ]; then
+  cd "$MAIN_WORKTREE"
+  gum style --foreground 117 "Switched to main worktree: $MAIN_WORKTREE"
+fi
+
+gum style --margin "1 0" --foreground 82 --bold "✨ Agent cleanup complete!"
 

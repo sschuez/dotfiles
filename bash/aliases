@@ -107,6 +107,7 @@ alias bat='batcat'
 alias lzg='lazygit'
 alias lzd='lazydocker'
 alias c='claude'
+alias avante='nvim -c "lua vim.defer_fn(function()require(\"avante.api\").zen_mode()end, 100)"'
 
 # System
 alias td="osascript -e 'tell application \"System Events\"

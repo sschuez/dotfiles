@@ -4,7 +4,4 @@ color_prompt=yes
 
 # Simple prompt with path in the window/pane title and caret for typing line
 PS1=$'\uf0a9  '
-
-# Uncomment the line below to show current directory name in prompt
 PS1="\[\e]0;\w\a\]$PS1"
-# PS1="\W \[\e]0;\w\a\]$PS1"

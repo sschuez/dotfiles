@@ -107,13 +107,26 @@ apply_wallpaper() {
   local wallpaper_dir="$THEME_DIR/wallpapers"
   local wallpaper_jpg="$wallpaper_dir/${THEME}.jpg"
   local wallpaper_png="$wallpaper_dir/${THEME}.png"
+  local wallpaper_path=""
 
   if [ -f "$wallpaper_jpg" ]; then
-    echo "Applying wallpaper for theme: $THEME"
-    osascript -e "tell application \"Finder\" to set desktop picture to POSIX file \"$wallpaper_jpg\""
+    wallpaper_path="$wallpaper_jpg"
   elif [ -f "$wallpaper_png" ]; then
-    echo "Applying wallpaper for theme: $THEME"
-    osascript -e "tell application \"Finder\" to set desktop picture to POSIX file \"$wallpaper_png\""
+    wallpaper_path="$wallpaper_png"
+  fi
+
+  if [ -n "$wallpaper_path" ]; then
+    echo "Applying wallpaper for theme: $THEME (all displays and spaces)"
+    osascript <<EOF
+tell application "System Events"
+  set desktopCount to count of desktops
+  repeat with desktopNumber from 1 to desktopCount
+    tell desktop desktopNumber
+      set picture to "$wallpaper_path"
+    end tell
+  end repeat
+end tell
+EOF
   fi
 }
 

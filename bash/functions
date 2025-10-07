@@ -12,9 +12,44 @@ transcode-video-4K() {
   ffmpeg -i $1 -c:v libx265 -preset slow -crf 24 -c:a aac -b:a 192k ${1%.*}-optimized.mp4
 }
 
-# Transcode PNG to JPG image that's great for shrinking wallpapers
+# Image conversion functions
+# Convert any image to JPG with high quality (great for wallpapers)
+img2jpg() {
+  if command -v magick &> /dev/null; then
+    magick "$1" -quality 95 -strip "${1%.*}.jpg"
+  else
+    echo "Error: ImageMagick is not installed. Install it with: brew install imagemagick"
+    return 1
+  fi
+}
+
+# Convert any image to smaller JPG for sharing online
+img2jpg-small() {
+  if command -v magick &> /dev/null; then
+    magick "$1" -resize 1080x\> -quality 95 -strip "${1%.*}-small.jpg"
+  else
+    echo "Error: ImageMagick is not installed. Install it with: brew install imagemagick"
+    return 1
+  fi
+}
+
+# Convert any image to compressed-but-lossless PNG
+img2png() {
+  if command -v magick &> /dev/null; then
+    magick "$1" -strip -define png:compression-filter=5 \
+      -define png:compression-level=9 \
+      -define png:compression-strategy=1 \
+      -define png:exclude-chunk=all \
+      "${1%.*}.png"
+  else
+    echo "Error: ImageMagick is not installed. Install it with: brew install imagemagick"
+    return 1
+  fi
+}
+
+# Legacy function for backward compatibility
 transcode-png2jpg() {
-  magick $1 -quality 95 -strip ${1%.*}.jpg
+  img2jpg "$@"
 }
 
 # Function to update the tmux window name

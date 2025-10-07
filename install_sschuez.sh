@@ -70,6 +70,11 @@ echo "Setting up Alacritty configuration..."
 mkdir -p ~/.config/alacritty
 backup_and_link "$DOTFILES_DIR/alacritty/alacritty.toml" ~/.config/alacritty/alacritty.toml
 
+# Starship configuration
+echo "Setting up Starship prompt configuration..."
+mkdir -p ~/.config
+backup_and_link "$DOTFILES_DIR/bash/starship.toml" ~/.config/starship.toml
+
 # Tmux configuration
 echo "Setting up tmux configuration..."
 backup_and_link "$DOTFILES_DIR/tmux/.tmux.conf" ~/.tmux.conf
@@ -99,6 +104,7 @@ tools_to_install=(
   "zoxide"                    # Smart cd
   "git"                       # Version control
   "neovim"                    # Text editor
+  "starship"                  # Modern prompt
   "tmux"                      # Terminal multiplexer
   "nikitabobko/tap/aerospace" # Tiling window manager
 )

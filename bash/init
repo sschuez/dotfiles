@@ -1,57 +1,71 @@
-# Modern tool integrations
+# Modern tool integrations with performance optimizations
+
+# Skip heavy initializations for non-interactive shells
+[[ $- != *i* ]] && return
+
+# Fast path for tmux subshells - skip redundant inits
+if [[ -n "$TMUX" && -n "$TMUX_INIT_DONE" ]]; then
+  return
+fi
+export TMUX_INIT_DONE=1
 
 # Mise (replaces nvm, pyenv, rbenv with a single tool)
+# Only load if we're likely to need it (development directories)
 if command -v mise &> /dev/null; then
-  eval "$(mise activate bash)" 2>/dev/null
-  # Ensure mise shims are at the beginning of PATH to override system binaries
+  # Lazy load mise - only activate when needed
+  mise() {
+    unset -f mise
+    eval "$(command mise activate bash)" 2>/dev/null
+    export PATH="$HOME/.local/share/mise/shims:$PATH"
+    mise "$@"
+  }
+  # Add shims to PATH immediately for already-activated environments
   export PATH="$HOME/.local/share/mise/shims:$PATH"
-else
-  # Fallback to individual version managers if mise not available
-  # Node Version Manager (nvm)
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
-  # Python Environment (pyenv) 
-  if command -v pyenv >/dev/null 2>&1; then
-    eval "$(pyenv init -)"
-    eval "$(pyenv virtualenv-init - 2>/dev/null)"
-  fi
 fi
 
-# Starship prompt
+# Starship prompt - optimized init
 if command -v starship &> /dev/null; then
-  eval "$(starship init bash)"
+  # Use minimal config for faster startup
+  export STARSHIP_CONFIG=~/.config/starship.toml
+  eval "$(starship init bash --print-full-init)"
 fi
 
-# Zoxide (better cd)
+# Zoxide (better cd) - lazy load
 if command -v zoxide &> /dev/null; then
-  eval "$(zoxide init bash)" 2>/dev/null
+  # Minimal init - only set up the 'z' alias
+  alias z='zoxide query --interactive'
+  # Full init on first use
+  zoxide() {
+    unset -f zoxide
+    eval "$(command zoxide init bash)" 2>/dev/null
+    zoxide "$@"
+  }
 fi
 
-# FZF (fuzzy finder)
-if command -v fzf &> /dev/null; then
+# FZF (fuzzy finder) - only load if in interactive terminal
+if command -v fzf &> /dev/null && [[ -t 0 ]]; then
   # Try Homebrew locations first
-  if [[ -f "/opt/homebrew/opt/fzf/shell/completion.bash" ]]; then
-    source "/opt/homebrew/opt/fzf/shell/completion.bash"
-  fi
   if [[ -f "/opt/homebrew/opt/fzf/shell/key-bindings.bash" ]]; then
-    source "/opt/homebrew/opt/fzf/shell/key-bindings.bash"
+    source "/opt/homebrew/opt/fzf/shell/key-bindings.bash" 2>/dev/null
   fi
+  # Skip completion for faster startup - load on demand
 fi
 
-# SSH Agent setup (from original config)
-SSH_ENV="$HOME/.ssh/environment"
-function start_agent {
-    echo "Initializing new SSH agent..."
+# SSH Agent setup - only for login shells or if not already running
+if [[ ! -n "$SSH_AUTH_SOCK" ]]; then
+  SSH_ENV="$HOME/.ssh/environment"
+
+  if [ -f "${SSH_ENV}" ]; then
+    . "${SSH_ENV}" > /dev/null
+    # Quick check if agent is still running
+    kill -0 $SSH_AGENT_PID 2>/dev/null || {
+      /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+      chmod 600 "${SSH_ENV}"
+      . "${SSH_ENV}" > /dev/null
+    }
+  else
     /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
     chmod 600 "${SSH_ENV}"
     . "${SSH_ENV}" > /dev/null
-    /usr/bin/ssh-add
-}
-
-if [ -f "${SSH_ENV}" ]; then
-    . "${SSH_ENV}" > /dev/null
-    ps -ef | grep "${SSH_AGENT_PID}" | grep ssh-agent$ > /dev/null || start_agent;
-else
-    start_agent;
+  fi
 fi

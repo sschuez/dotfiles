@@ -44,6 +44,8 @@ set-option -g renumber-windows on
 
 # Use modern bash for all new panes and windows
 set -g default-shell "/opt/homebrew/bin/bash"
+# Use non-login shell for better performance (bashrc is still sourced)
+set -g default-command "/opt/homebrew/bin/bash"
 
 # Enable automatic renaming
 set-window-option -g automatic-rename on

@@ -5,6 +5,7 @@ at-spi2-core
 autoconf
 autojump
 awscli
+bash
 bat
 borders
 brotli
@@ -38,6 +39,7 @@ freetype
 frei0r
 fribidi
 fzf
+gawk
 gcc
 gdk-pixbuf
 geckodriver
@@ -216,7 +218,6 @@ python-packaging
 python@3.12
 python@3.13
 rav1e
-rbenv
 readline
 redis
 ripgrep
@@ -233,6 +234,8 @@ speex
 sqlite
 srt
 srtp
+starship
+stripe-cli
 svt-av1
 taglib
 tbb

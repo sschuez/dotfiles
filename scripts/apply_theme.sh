@@ -6,6 +6,7 @@ THEME_NAMES=(
   "Catppuccin Mocha"
   "Everforest Dark"
   "Everforest Light"
+  "Flexoki Light"
   "Gruvbox"
   "Gruvbox Light"
   "Jellybeans"
@@ -93,7 +94,7 @@ set_system_dark_mode() {
 # Function to determine if theme is dark or light
 is_dark_theme() {
   case "$THEME" in
-  "catppuccin-latte" | "gruvbox-light" | "everforest-light" | "snow" | "milky-matcha" | "rose-pine" | "solarized")
+  "catppuccin-latte" | "gruvbox-light" | "everforest-light" | "snow" | "flexoki-light" | "milky-matcha" | "rose-pine" | "solarized")
     return 1 # Light theme
     ;;
   *)

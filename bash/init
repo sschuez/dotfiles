@@ -30,16 +30,9 @@ if command -v starship &> /dev/null; then
   eval "$(starship init bash --print-full-init)"
 fi
 
-# Zoxide (better cd) - lazy load
+# Zoxide (better cd) - needed for cd alias
 if command -v zoxide &> /dev/null; then
-  # Minimal init - only set up the 'z' alias
-  alias z='zoxide query --interactive'
-  # Full init on first use
-  zoxide() {
-    unset -f zoxide
-    eval "$(command zoxide init bash)" 2>/dev/null
-    zoxide "$@"
-  }
+  eval "$(zoxide init bash)" 2>/dev/null
 fi
 
 # FZF (fuzzy finder) - only load if in interactive terminal

@@ -2,6 +2,7 @@ return {
 	{
 		"gthelding/monokai-pro.nvim",
 		config = function()
+			vim.o.background = "dark"
 			require("monokai-pro").setup({
 				filter = "ristretto",
 				override = function()

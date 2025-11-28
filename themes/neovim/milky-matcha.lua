@@ -210,6 +210,13 @@ return {
 				vim.g.terminal_color_13 = colors.lavender
 				vim.g.terminal_color_14 = colors.mint
 				vim.g.terminal_color_15 = colors.fg0
+
+				-- Set custom fzf colors for Milky Matcha
+				vim.g.theme_fzf_colors = {
+					text_fg = colors.fg0,      -- Milky Matcha dark green-gray text
+					match_fg = colors.matcha,  -- Milky Matcha primary green
+					selection_bg = colors.bg3, -- Milky Matcha selection background
+				}
 			end,
 		},
 	},

@@ -63,10 +63,13 @@ clean_docker_env() {
       
       # Stop and remove containers
       docker compose -p "${docker_project}" down -v 2>/dev/null || true
-      
+
       # Remove any lingering volumes
       docker volume ls --format "{{.Name}}" | grep "^${docker_project}_" | xargs -r docker volume rm 2>/dev/null || true
-      
+
+      # Remove images created for this agent
+      docker images --format "{{.Repository}}" | grep -E "^${docker_project}[_-]" | xargs -r docker rmi 2>/dev/null || true
+
       gum style --foreground 82 "  ✅ Docker environment cleaned"
     fi
   fi

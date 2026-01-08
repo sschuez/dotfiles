@@ -1,8 +1,11 @@
 # Import theme (switched by apply_theme.sh)
-config-file = ?"~/.config/ghostty/theme.conf"
+config-file = ?theme.conf
 
-# Import font (switched by apply_font.sh / font size scripts)
-config-file = ?"~/.config/ghostty/font.conf"
+# Import font (switched by apply_font.sh)
+config-file = ?font.conf
+
+# Import font size (switched by apply_font_size.sh)
+config-file = ?font-size.conf
 
 # Window
 window-padding-x = 10
@@ -18,3 +21,6 @@ shell-integration-features = no-cursor
 
 # Background opacity
 background-opacity = 0.98
+
+# Shell - no login flag since we immediately exec into tmux anyway
+command = /opt/homebrew/bin/bash

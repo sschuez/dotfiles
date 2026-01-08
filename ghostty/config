@@ -1,0 +1,20 @@
+# Import theme (switched by apply_theme.sh)
+config-file = ?"~/.config/ghostty/theme.conf"
+
+# Import font (switched by apply_font.sh / font size scripts)
+config-file = ?"~/.config/ghostty/font.conf"
+
+# Window
+window-padding-x = 10
+window-padding-y = 10
+window-decoration = false
+confirm-close-surface = false
+macos-titlebar-style = hidden
+
+# Cursor
+cursor-style = block
+cursor-style-blink = false
+shell-integration-features = no-cursor
+
+# Background opacity
+background-opacity = 0.98

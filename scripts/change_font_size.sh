@@ -26,5 +26,22 @@ fi
 echo "[font]" >"$FONT_SIZE_FILE"
 echo "size = $NEW_SIZE" >>"$FONT_SIZE_FILE"
 
+# Update Ghostty font size
+GHOSTTY_FONT_CONF="$HOME/.config/ghostty/font.conf"
+if [ -f "$GHOSTTY_FONT_CONF" ]; then
+	# Read current font family or default
+	CURRENT_FONT=$(grep "^font-family" "$GHOSTTY_FONT_CONF" | sed 's/font-family = //' | tr -d '"')
+	[ -z "$CURRENT_FONT" ] && CURRENT_FONT="CaskaydiaMono Nerd Font"
+	# Write updated font config
+	cat > "$GHOSTTY_FONT_CONF" << EOF
+# Ghostty font configuration (switched by apply_font.sh / font size scripts)
+font-family = "$CURRENT_FONT"
+font-style = Regular
+font-size = $NEW_SIZE
+EOF
+	# Signal Ghostty to reload
+	killall -SIGUSR2 ghostty 2>/dev/null || true
+fi
+
 # Logging for debugging
 echo "Font size $1ed to $NEW_SIZE successfully!"

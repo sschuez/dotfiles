@@ -50,4 +50,22 @@ mkdir -p "$ALACRITTY_CONFIG_DIR"
 # Copy the appropriate Alacritty font configuration
 cp "$DOTFILES_PATH/fonts/alacritty/$FONT.toml" "$ALACRITTY_CONFIG_DIR/font.toml"
 
+# Update Ghostty font configuration
+GHOSTTY_FONT_CONF="$HOME/.config/ghostty/font.conf"
+# Read current font size from existing config or default to 13
+CURRENT_SIZE=13
+if [ -f "$GHOSTTY_FONT_CONF" ]; then
+	CURRENT_SIZE=$(grep "^font-size" "$GHOSTTY_FONT_CONF" | sed 's/font-size = //')
+fi
+# Write new font config
+cat > "$GHOSTTY_FONT_CONF" << EOF
+# Ghostty font configuration (switched by apply_font.sh / font size scripts)
+font-family = "$NERD_FONT"
+font-style = Regular
+font-size = $CURRENT_SIZE
+EOF
+# Signal Ghostty to reload
+killall -SIGUSR2 ghostty 2>/dev/null || true
+echo "Applied Ghostty font: $NERD_FONT"
+
 echo "Font settings applied successfully!"

@@ -61,18 +61,9 @@ alias flg="$HOME/code/dotfiles/scripts/change_font_size.sh increment"
 alias fsm="$HOME/code/dotfiles/scripts/change_font_size.sh decrement"
 
 # Tmux
-alias tx='if ! tmux has-session 2>/dev/null; then tmux new-session -d; fi && tmux source-file ~/.tmux.conf && tmux'
-# Commented out - this alias causes issues with tmux commands
-# alias tmux='if ! tmux has-session 2>/dev/null; then tmux new-session -d; fi && tmux source-file ~/.tmux.conf && tmux'
-alias ta='tmux attach-session -t $(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep -v "^_bg$" | head -n1) 2>/dev/null || tmux new-session -s main'
-alias tk='if tmux has-session 2>/dev/null; then tmux kill-session -a; fi'
-alias ts='tmux attach-session -t server || tmux new -s server'
-
-# Tmux background session management (keeps server warm for faster startup)
-alias tbg='tmux list-sessions | grep -q "_bg" && echo "Background session active ✓" || echo "No background session"'
-alias tbg-start='~/code/dotfiles/scripts/tmux-background.sh'
-alias tbg-stop='tmux kill-session -t _bg 2>/dev/null && echo "Stopped background session" || echo "No background session to stop"'
-alias tbg-restart='tbg-stop && sleep 1 && tbg-start'
+alias ta='tmux new-session -A -s main'   # attach to main or create it
+alias ts='tmux new-session -A -s server' # attach to server or create it
+alias tk='tmux kill-session -a'          # kill all sessions except current
 alias tls='tmux list-sessions 2>/dev/null || echo "No tmux sessions"'
 
 # Docker
@@ -96,7 +87,6 @@ alias kd="kamal deploy"
 # Project directories  
 alias proj='cd ~/code/projects'
 alias sub='cd ~/code/submissio/submissio && nvim .'
-alias subc='cd ~/code/submissio/claude/submissio_claude && nvim .'
 alias dot='cd ~/code/dotfiles && nvim .'
 alias vimconf='cd ~/.config/nvim && nvim .'
 alias doc='cd ~/Desktop/docs/'

@@ -3,8 +3,20 @@
 # Skip heavy initializations for non-interactive shells
 [[ $- != *i* ]] && return
 
+# Auto-attach to tmux for interactive terminals
+# Excludes: already in tmux, SSH sessions, non-TTY, VSCode terminal
+if [[ -z "$TMUX" && -t 0 && -z "$SSH_CONNECTION" && "$TERM_PROGRAM" != "vscode" ]]; then
+  # If main session exists and has a client attached, create new session
+  # Otherwise attach to main (or create it)
+  if tmux has-session -t main 2>/dev/null && [[ $(tmux list-clients -t main 2>/dev/null | wc -l) -gt 0 ]]; then
+    exec tmux new-session
+  else
+    exec tmux new-session -A -s main
+  fi
+fi
+
 # Fast path for tmux subshells - skip redundant inits
-if [[ -n "$TMUX" && -n "$TMUX_INIT_DONE" ]]; then
+if [[ -n "$TMUX_INIT_DONE" ]]; then
   return
 fi
 export TMUX_INIT_DONE=1

@@ -39,6 +39,8 @@ TMUX_THEME_CONF="$TMUX_THEME_DIR/${THEME}.conf"
 CURRENT_THEME_CONF="$HOME/code/dotfiles/tmux/.tmux.conf"
 ALACRITTY_THEME_DIR="$THEME_DIR/alacritty"
 ALACRITTY_THEME_CONF="$ALACRITTY_THEME_DIR/${THEME}.toml"
+GHOSTTY_THEME_DIR="$THEME_DIR/ghostty"
+GHOSTTY_THEME_CONF="$GHOSTTY_THEME_DIR/${THEME}.conf"
 
 # Apply theme to tmux
 apply_tmux_theme() {
@@ -58,6 +60,19 @@ apply_alacritty_theme() {
     echo "Applied Alacritty theme: $THEME"
   else
     echo "Alacritty theme configuration file for '$THEME' not found."
+  fi
+}
+
+# Apply theme to Ghostty
+apply_ghostty_theme() {
+  if [ -f "$GHOSTTY_THEME_CONF" ]; then
+    # Copy theme file to where ghostty config imports it from
+    cp "$GHOSTTY_THEME_CONF" "$HOME/.config/ghostty/theme.conf"
+    # Signal Ghostty to reload config (SIGUSR2)
+    killall -SIGUSR2 ghostty 2>/dev/null || true
+    echo "Applied Ghostty theme: $THEME"
+  else
+    echo "Ghostty theme configuration file for '$THEME' not found."
   fi
 }
 
@@ -135,6 +150,7 @@ EOF
 # apply_iterm_theme
 apply_tmux_theme
 apply_alacritty_theme
+apply_ghostty_theme
 apply_neovim_theme
 apply_wallpaper
 

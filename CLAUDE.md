@@ -98,10 +98,22 @@ Scripts automatically maintain `brew-formulas.txt` and `brew-casks.txt` for repr
 
 ### Multi-Agent Git Workflow
 The repository includes scripts for managing multiple git worktrees:
-- `setup-agents`: Multi-agent setup
-- `agents`: List all worktrees
-- `agents-status`: Show branch status
-- `agent-cleanup`: Prune and clean branches
+
+```bash
+# Setup
+setup-agent <name>    # Create new worktree with branch
+setup-agents          # Multi-agent setup wizard
+
+# View
+agents                # List all worktrees
+agents-status         # Show worktrees + branch status
+
+# Cleanup
+agent-cleanup              # Interactive - select agents to remove
+agent-cleanup <name>       # Direct removal by name or path
+```
+
+The cleanup script removes the worktree, cleans up Docker environments (if applicable), and optionally deletes the branch. Worktrees are stored in `~/.claude-worktrees/<project>/`.
 
 ### Theme Development
 When adding new themes:

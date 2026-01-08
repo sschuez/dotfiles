@@ -15,7 +15,9 @@ after-login-command = []
 # You can use it to add commands that run after AeroSpace startup.
 # 'after-startup-command' is run after 'after-login-command'
 # Available commands : https://nikitabobko.github.io/AeroSpace/commands
-after-startup-command = ['exec-and-forget pkill -x borders; sleep 0.5; borders active_color=0xfff5c2e7 inactive_color=0x00ffffff width=4.0 style=round']
+after-startup-command = [
+  'exec-and-forget pkill -x borders; sleep 0.5; borders active_color=0xfff5c2e7 inactive_color=0x00ffffff width=4.0 style=round',
+]
 
 # Start AeroSpace at login
 start-at-login = true
@@ -86,8 +88,8 @@ outer.right = 5
 # All possible commands: https://nikitabobko.github.io/AeroSpace/commands
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#exec-and-forget
-# You can uncomment the following lines to open up terminal with alt + enter shortcut (like in i3)
-alt-enter = 'exec-and-forget open -n /Applications/Alacritty.app'
+# Open terminal with alt + enter shortcut (like in i3)
+alt-enter = 'exec-and-forget open -na "Ghostty"'
 alt-backslash = 'exec-and-forget open -a "1Password"'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#layout

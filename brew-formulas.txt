@@ -49,6 +49,7 @@ ghostscript
 giflib
 git
 git-filter-repo
+gitleaks
 glib
 glib-networking
 gmp
@@ -73,6 +74,7 @@ hwloc
 icu4c@74
 icu4c@76
 icu4c@77
+icu4c@78
 imagemagick
 imath
 isl
@@ -115,6 +117,8 @@ libmatio
 libmicrohttpd
 libmpc
 libnghttp2
+libnghttp3
+libngtcp2
 libnice
 libogg
 libomp
@@ -190,6 +194,7 @@ oniguruma
 onnx
 open-mpi
 openblas
+opencode
 opencore-amr
 openexr
 openjpeg
@@ -228,6 +233,7 @@ rust
 s3cmd
 sdl2
 shared-mime-info
+simdjson
 sketchybar
 snappy
 speex
@@ -250,6 +256,7 @@ usage
 utf8cpp
 utf8proc
 uthash
+uvwasi
 vips
 watch
 webp

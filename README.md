@@ -219,12 +219,18 @@ Access points:
 
 ```bash
 # List all worktrees
-git worktree list
+agents                # or: git worktree list
+agents-status         # Show worktrees + branch status
 
-# Remove worktree when done
-git worktree remove ../submissio-payments-feature --force
-git branch -d feat/payments-feature
+# Switch to a worktree (each is a separate directory)
+cd ~/.claude-worktrees/<project>/<agent-name>
+
+# Cleanup when done
+agent-cleanup              # Interactive - select agents to remove
+agent-cleanup <name>       # Direct removal by name or path
 ```
+
+The cleanup script removes the worktree, cleans up Docker environments, and optionally deletes the branch.
 
 ### Docker Environment Management
 

@@ -49,40 +49,40 @@ git worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR" "$CURRENT_BRANCH"
 
 echo "✅ Worktree created at: $WORKTREE_DIR"
 
+# Function to check if port is in use (by Docker or system)
+is_port_in_use() {
+  local port=$1
+  # Check Docker containers
+  docker ps --format "table {{.Ports}}" 2>/dev/null | grep -q ":${port}->" && return 0
+  # Check system (macOS)
+  lsof -iTCP:${port} -sTCP:LISTEN &>/dev/null && return 0
+  return 1
+}
+
+# Function to find next available port starting from base
+find_next_port() {
+  local base_port=$1
+  local port=$base_port
+  local max_attempts=20
+  local attempt=0
+
+  while [ $attempt -lt $max_attempts ]; do
+    if ! is_port_in_use $port; then
+      echo $port
+      return 0
+    fi
+    ((port++))
+    ((attempt++))
+  done
+
+  echo $base_port # Fallback
+  return 1
+}
+
 # Auto-setup Docker environment if bin/docker-env exists
 if [ "$NO_DOCKER" = false ] && [ -f "bin/docker-env" ]; then
   echo ""
-  echo "🐳 Setting up Docker environment..."
-
-  # Function to check if port is in use (by Docker or system)
-  is_port_in_use() {
-    local port=$1
-    # Check Docker containers
-    docker ps --format "table {{.Ports}}" 2>/dev/null | grep -q ":${port}->" && return 0
-    # Check system (macOS)
-    lsof -iTCP:${port} -sTCP:LISTEN &>/dev/null && return 0
-    return 1
-  }
-
-  # Function to find next available port starting from base
-  find_next_port() {
-    local base_port=$1
-    local port=$base_port
-    local max_attempts=20
-    local attempt=0
-
-    while [ $attempt -lt $max_attempts ]; do
-      if ! is_port_in_use $port; then
-        echo $port
-        return 0
-      fi
-      ((port++))
-      ((attempt++))
-    done
-
-    echo $base_port # Fallback
-    return 1
-  }
+  echo "🐳 Setting up Docker environment (bin/docker-env)..."
 
   # Find next available ports
   # Start from 3001 for agent worktrees (3000 is reserved for main)
@@ -116,6 +116,46 @@ if [ "$NO_DOCKER" = false ] && [ -f "bin/docker-env" ]; then
       echo "    Chrome NoVNC: http://localhost:$CHROME_PORT"
     else
       echo "  ⚠️  bin/docker-env not found in worktree"
+    fi
+  )
+
+# Auto-setup Docker by modifying docker-compose.yml if it exists but no bin/docker-env
+# Note: We edit the file directly because docker-compose.override.yml MERGES arrays (ports)
+# instead of replacing them, causing port conflicts
+elif [ "$NO_DOCKER" = false ] && [ -f "docker-compose.yml" ]; then
+  echo ""
+  echo "🐳 Setting up Docker environment..."
+
+  # Find next available ports
+  APP_PORT=$(find_next_port 3001)
+  DEBUG_PORT=$((APP_PORT + 1233)) # Debug port offset (1234 for 3001, etc.)
+  CHROME_PORT=$((APP_PORT + 4899)) # Chrome port (7900 for 3001, etc.)
+
+  # Ensure Chrome port is available
+  while is_port_in_use $CHROME_PORT; do
+    ((APP_PORT++))
+    APP_PORT=$(find_next_port $APP_PORT)
+    DEBUG_PORT=$((APP_PORT + 1233))
+    CHROME_PORT=$((APP_PORT + 4899))
+  done
+
+  echo "  📍 Found available ports: $APP_PORT (app), $DEBUG_PORT (debug), $CHROME_PORT (Chrome)"
+
+  # Modify docker-compose.yml directly in the worktree
+  (
+    cd "$WORKTREE_DIR"
+    if [ -f "docker-compose.yml" ]; then
+      # Replace common port patterns (works for most Rails/Node projects)
+      sed -i '' \
+        -e "s/\"3000:3000\"/\"$APP_PORT:3000\"/g" \
+        -e "s/\"1234:1234\"/\"$DEBUG_PORT:1234\"/g" \
+        -e "s/\"7900:7900\"/\"$CHROME_PORT:7900\"/g" \
+        docker-compose.yml
+      echo "  ✅ Updated docker-compose.yml with unique ports"
+      echo ""
+      echo "  Access points:"
+      echo "    App: http://localhost:$APP_PORT"
+      echo "    Chrome NoVNC: http://localhost:$CHROME_PORT"
     fi
   )
 fi
@@ -228,6 +268,17 @@ if [ "$NO_DOCKER" = false ] && [ -f "$WORKTREE_DIR/bin/docker-env" ]; then
   echo "  Console:   bin/docker-env console"
   echo "  Logs:      bin/docker-env logs"
   echo "  Status:    bin/docker-env status"
+  echo ""
+  echo "  Access:"
+  echo "    App:     http://localhost:$APP_PORT"
+  echo "    Chrome:  http://localhost:$CHROME_PORT"
+  echo ""
+elif [ "$NO_DOCKER" = false ] && [ -f "$WORKTREE_DIR/docker-compose.yml" ] && [ ! -f "$WORKTREE_DIR/bin/docker-env" ]; then
+  echo "🐳 Docker Commands:"
+  echo "  Start:     docker compose up -d"
+  echo "  Stop:      docker compose down"
+  echo "  Logs:      docker compose logs -f"
+  echo "  Shell:     docker compose exec app bash"
   echo ""
   echo "  Access:"
   echo "    App:     http://localhost:$APP_PORT"

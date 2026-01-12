@@ -3,6 +3,11 @@ backup/zsh/zsh_env
 *_env
 *.env
 
+# Active theme files (change on every theme switch)
+tmux/theme.conf
+alacritty/theme.toml
+ghostty/theme.conf
+
 # macOS
 .DS_Store
 **/.DS_Store

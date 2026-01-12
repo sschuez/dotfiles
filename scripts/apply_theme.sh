@@ -45,8 +45,12 @@ GHOSTTY_THEME_CONF="$GHOSTTY_THEME_DIR/${THEME}.conf"
 # Apply theme to tmux
 apply_tmux_theme() {
   if [ -f "$TMUX_THEME_CONF" ]; then
-    # Generate new tmux.conf with theme colors
-    "$HOME/code/dotfiles/scripts/generate_tmux_conf.sh" "$TMUX_THEME_CONF"
+    # Copy theme file to where tmux config sources it from
+    cp "$TMUX_THEME_CONF" "$HOME/code/dotfiles/tmux/theme.conf"
+    # Reload tmux config if tmux is running
+    if tmux info &>/dev/null; then
+      tmux source-file "$HOME/code/dotfiles/tmux/.tmux.conf" 2>/dev/null || true
+    fi
     echo "Applied tmux theme: $THEME"
   else
     echo "tmux theme configuration file for '$THEME' not found."

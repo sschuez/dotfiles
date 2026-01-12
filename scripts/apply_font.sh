@@ -1,59 +1,60 @@
 #!/usr/bin/env bash
 
-# Set the base path for your dotfiles
-DOTFILES_PATH="$HOME/code/dotfiles"
+DOTFILES="$HOME/code/dotfiles"
+FONTS_DIR="$DOTFILES/fonts"
+CURRENT_FONT_FILE="$FONTS_DIR/.current"
 
-FONT=$(gum choose "Cascadia Mono" "Fira Mono" "JetBrains Mono" "Meslo" "Blex Mono" "Roboto Mono" "Ubuntu Mono" "Cancel" --header "Choose your programming font:" --height 6 | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
+# Auto-detect fonts from alacritty folder
+get_fonts() {
+  find "$FONTS_DIR/alacritty" -name "*.toml" ! -name "previous-*" -exec basename {} .toml \; | sort
+}
 
-# If the user chooses "Cancel" or no selection is made, exit the script
-if [ -z "$FONT" ] || [ "$FONT" = "cancel" ]; then
-	echo "No font selected. Exiting..."
-	exit 0
-fi
+# Convert kebab-case to Title Case
+to_display_name() {
+  echo "$1" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))}1'
+}
 
-# Determine the Nerd Font name
-case "$FONT" in
-"cascadia-mono")
-	NERD_FONT="CaskaydiaMono Nerd Font"
-	;;
-"fira-mono")
-	NERD_FONT="FiraMono Nerd Font"
-	;;
-"jetbrains-mono")
-	NERD_FONT="JetBrainsMono NFM"
-	;;
-"meslo")
-	NERD_FONT="MesloLGLDZ Nerd Font"
-	;;
-"blex-mono")
-	NERD_FONT="BlexMono Nerd Font"
-	;;
-"roboto-mono")
-	NERD_FONT="RobotoMono Nerd Font"
-	;;
-"ubuntu-mono")
-	NERD_FONT="UbuntuMono Nerd Font"
-	;;
-*)
-	echo "Unknown font selected."
-	exit 1
-	;;
-esac
+# Convert Title Case to kebab-case
+to_folder_name() {
+  echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g'
+}
 
-# Update GNOME monospace font settings
-gsettings set org.gnome.desktop.interface monospace-font-name "$NERD_FONT 10"
+# Get current font
+get_current_font() {
+  [ -f "$CURRENT_FONT_FILE" ] && cat "$CURRENT_FONT_FILE"
+}
 
-# Ensure the Alacritty config directory exists
-ALACRITTY_CONFIG_DIR="$HOME/.config/alacritty"
-mkdir -p "$ALACRITTY_CONFIG_DIR"
+# Build menu with current font indicator
+build_menu() {
+  local current=$(get_current_font)
+  for font in $(get_fonts); do
+    local display=$(to_display_name "$font")
+    [ "$font" = "$current" ] && echo "$display *" || echo "$display"
+  done
+  echo "Cancel"
+}
 
-# Copy the appropriate Alacritty font configuration
-cp "$DOTFILES_PATH/fonts/alacritty/$FONT.toml" "$ALACRITTY_CONFIG_DIR/font.toml"
+# Select font
+SELECTION=$(build_menu | gum choose --header "Choose your programming font:")
 
-# Update Ghostty font configuration (font-size is in separate font-size.conf)
-cp "$DOTFILES_PATH/fonts/ghostty/$FONT.conf" "$DOTFILES_PATH/ghostty/font.conf"
-# Signal Ghostty to reload
+# Handle cancel
+[[ -z "$SELECTION" || "$SELECTION" == "Cancel" ]] && echo "No font selected." && exit 0
+
+# Convert to folder name
+FONT=$(to_folder_name "${SELECTION% \*}")
+
+echo "Applying font: $FONT"
+
+# Apply Alacritty font
+[ -f "$FONTS_DIR/alacritty/$FONT.toml" ] && cp "$FONTS_DIR/alacritty/$FONT.toml" "$HOME/.config/alacritty/font.toml" && echo "  alacritty"
+
+# Apply Ghostty font
+[ -f "$FONTS_DIR/ghostty/$FONT.conf" ] && cp "$FONTS_DIR/ghostty/$FONT.conf" "$DOTFILES/ghostty/font.conf" && echo "  ghostty"
+
+# Reload Ghostty
 killall -SIGUSR2 ghostty 2>/dev/null || true
-echo "Applied Ghostty font: $NERD_FONT"
 
-echo "Font settings applied successfully!"
+# Save current font
+echo "$FONT" > "$CURRENT_FONT_FILE"
+
+echo "Done!"

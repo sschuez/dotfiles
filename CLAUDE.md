@@ -29,11 +29,22 @@ This installs modern bash, creates symlinks, backs up existing configs, and inst
   - `inputrc`: Readline configuration
 
 ### Theme Management System
-Unified theming across applications with script-based switching:
-- **themes/**: Theme files organized by application (alacritty/, neovim/, tmux/, wallpapers/)
+Unified theming across applications with per-theme folder structure (inspired by omarchy):
+- **themes/**: Each theme has its own folder containing all assets:
+  ```
+  themes/
+  ├── rose-pine/
+  │   ├── alacritty.toml    # Alacritty theme colors
+  │   ├── ghostty.conf      # Ghostty theme colors
+  │   ├── tmux.conf         # tmux statusline theme
+  │   ├── neovim.lua        # Neovim colorscheme plugin spec
+  │   ├── wallpaper.png     # Desktop wallpaper (.jpg or .png)
+  │   └── light.mode        # Empty file (presence = light theme)
+  └── ...
+  ```
 - **scripts/apply_theme.sh**: Master theme switcher using gum for selection
-- Automatically switches system dark/light mode and wallpapers
-- Updates tmux, Alacritty, and Neovim themes simultaneously
+- Automatically switches system dark/light mode based on `light.mode` file presence
+- Updates tmux, Alacritty, Ghostty, Neovim, and wallpaper simultaneously
 
 ### Application Configurations
 - **alacritty/**: Terminal emulator config with modular theme/font includes
@@ -117,10 +128,15 @@ The cleanup script removes the worktree, cleans up Docker environments (if appli
 
 ### Theme Development
 When adding new themes:
-1. Create theme files in `themes/alacritty/`, `themes/tmux/`, `themes/neovim/`
-2. Add wallpaper to `themes/wallpapers/`
-3. Update theme list in `scripts/apply_theme.sh`
-4. Test light/dark classification in the `is_dark_theme()` function
+1. Create a new folder in `themes/<theme-name>/`
+2. Add theme files:
+   - `alacritty.toml` - Alacritty color configuration
+   - `ghostty.conf` - Ghostty color configuration
+   - `tmux.conf` - tmux statusline colors
+   - `neovim.lua` - Neovim colorscheme plugin spec
+   - `wallpaper.jpg` or `wallpaper.png` - Desktop wallpaper
+3. For light themes: create an empty `light.mode` file in the theme folder
+4. Add theme name to `THEME_NAMES` array in `scripts/apply_theme.sh`
 
 ### Configuration Backup
 The install script automatically creates timestamped backups in `backup/YYYYMMDD_HHMMSS/` before making changes.

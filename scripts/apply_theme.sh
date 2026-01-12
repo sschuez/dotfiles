@@ -1,169 +1,97 @@
 #!/bin/bash
 
-# Define available themes
-THEME_NAMES=(
-  "Catppuccin Latte"
-  "Catppuccin Mocha"
-  "Everforest Dark"
-  "Everforest Light"
-  "Flexoki Light"
-  "Gruvbox"
-  "Gruvbox Light"
-  "Jellybeans"
-  "Kanagawa"
-  "Matte Black"
-  "Milky Matcha"
-  "Nord"
-  "Ristretto"
-  "Rose Pine"
-  "Snow"
-  "Solarized"
-  "Tokyo Night"
-  "Cancel"
-)
-
-# Use gum to select a theme (assuming gum is installed)
-THEME=$(gum choose "${THEME_NAMES[@]}" --header "Choose your theme" --height 9 | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
-
-# Exit if no theme is selected
-if [ -z "$THEME" ] || [ "$THEME" == "cancel" ]; then
-  echo "No theme selected."
-  exit 0
-fi
-
-# Define theme directories
 THEME_DIR="$HOME/code/dotfiles/themes"
-NEOVIM_THEME_DIR="$THEME_DIR/neovim"
-TMUX_THEME_DIR="$THEME_DIR/tmux"
-TMUX_THEME_CONF="$TMUX_THEME_DIR/${THEME}.conf"
-CURRENT_THEME_CONF="$HOME/code/dotfiles/tmux/.tmux.conf"
-ALACRITTY_THEME_DIR="$THEME_DIR/alacritty"
-ALACRITTY_THEME_CONF="$ALACRITTY_THEME_DIR/${THEME}.toml"
-GHOSTTY_THEME_DIR="$THEME_DIR/ghostty"
-GHOSTTY_THEME_CONF="$GHOSTTY_THEME_DIR/${THEME}.conf"
+CURRENT_THEME_FILE="$THEME_DIR/.current"
 
-# Apply theme to tmux
-apply_tmux_theme() {
-  if [ -f "$TMUX_THEME_CONF" ]; then
-    # Copy theme file to where tmux config sources it from
-    cp "$TMUX_THEME_CONF" "$HOME/code/dotfiles/tmux/theme.conf"
-    # Reload tmux config if tmux is running
-    if tmux info &>/dev/null; then
-      tmux source-file "$HOME/code/dotfiles/tmux/.tmux.conf" 2>/dev/null || true
+# Auto-detect themes from folder names
+get_themes() {
+  find "$THEME_DIR" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort
+}
+
+# Convert kebab-case to Title Case for display
+to_display_name() {
+  echo "$1" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))}1'
+}
+
+# Convert Title Case back to kebab-case
+to_folder_name() {
+  echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g'
+}
+
+# Get current theme (if set)
+get_current_theme() {
+  [ -f "$CURRENT_THEME_FILE" ] && cat "$CURRENT_THEME_FILE"
+}
+
+# Build display names array with current theme indicator
+build_menu() {
+  local current=$(get_current_theme)
+  local themes=$(get_themes)
+
+  while IFS= read -r theme; do
+    local display=$(to_display_name "$theme")
+    if [ "$theme" = "$current" ]; then
+      echo "$display *"
+    else
+      echo "$display"
     fi
-    echo "Applied tmux theme: $THEME"
-  else
-    echo "tmux theme configuration file for '$THEME' not found."
+  done <<<"$themes"
+  echo "Cancel"
+}
+
+# Select theme with gum
+SELECTION=$(build_menu | gum choose --header "Choose your theme")
+
+# Handle cancel or no selection
+[[ -z "$SELECTION" || "$SELECTION" == "Cancel" ]] && echo "No theme selected." && exit 0
+
+# Remove the " *" suffix if present and convert to folder name
+THEME=$(to_folder_name "${SELECTION% \*}")
+THEME_PATH="$THEME_DIR/$THEME"
+
+# Verify theme exists
+[ ! -d "$THEME_PATH" ] && echo "Theme not found: $THEME" && exit 1
+
+# Generic file copy function
+apply_config() {
+  local src="$1" dst="$2" app="$3"
+  [ -f "$src" ] && cp "$src" "$dst" && echo "  $app"
+}
+
+echo "Applying theme: $THEME"
+
+# Apply all configs
+apply_config "$THEME_PATH/tmux.conf" "$HOME/code/dotfiles/tmux/theme.conf" "tmux"
+apply_config "$THEME_PATH/alacritty.toml" "$HOME/.config/alacritty/theme.toml" "alacritty"
+apply_config "$THEME_PATH/ghostty.conf" "$HOME/.config/ghostty/theme.conf" "ghostty"
+apply_config "$THEME_PATH/neovim.lua" "$HOME/.config/nvim/lua/plugins/theme.lua" "neovim"
+
+# Reload tmux if running
+tmux info &>/dev/null && tmux source-file "$HOME/code/dotfiles/tmux/.tmux.conf" 2>/dev/null
+
+# Reload Ghostty
+killall -SIGUSR2 ghostty 2>/dev/null || true
+
+# Apply wallpaper
+for ext in jpg png; do
+  wallpaper="$THEME_PATH/wallpaper.$ext"
+  if [ -f "$wallpaper" ]; then
+    osascript -e "tell application \"System Events\" to set picture of every desktop to \"$wallpaper\"" 2>/dev/null
+    echo "  wallpaper"
+    break
   fi
-}
+done
 
-# Apply theme to Alacritty
-apply_alacritty_theme() {
-  if [ -f "$ALACRITTY_THEME_CONF" ]; then
-    cp "$ALACRITTY_THEME_CONF" "$HOME/.config/alacritty/theme.toml"
-    echo "Applied Alacritty theme: $THEME"
-  else
-    echo "Alacritty theme configuration file for '$THEME' not found."
-  fi
-}
-
-# Apply theme to Ghostty
-apply_ghostty_theme() {
-  if [ -f "$GHOSTTY_THEME_CONF" ]; then
-    # Copy theme file to where ghostty config imports it from
-    cp "$GHOSTTY_THEME_CONF" "$HOME/.config/ghostty/theme.conf"
-    # Signal Ghostty to reload config (SIGUSR2)
-    killall -SIGUSR2 ghostty 2>/dev/null || true
-    echo "Applied Ghostty theme: $THEME"
-  else
-    echo "Ghostty theme configuration file for '$THEME' not found."
-  fi
-}
-
-# Apply theme to Neovim
-apply_neovim_theme() {
-  local neovim_theme="$NEOVIM_THEME_DIR/$THEME.lua"
-  if [ -f "$neovim_theme" ]; then
-    cp "$neovim_theme" "$HOME/.config/nvim/lua/plugins/theme.lua"
-    echo "Applied Neovim theme: $THEME"
-  else
-    echo "Neovim theme file not found."
-  fi
-}
-
-# Function to get current system dark mode state
-get_system_dark_mode() {
-  osascript -e 'tell application "System Events" to tell appearance preferences to get dark mode'
-}
-
-# Function to set system dark mode
-set_system_dark_mode() {
-  local should_be_dark=$1
-  local current_dark_mode=$(get_system_dark_mode)
-
-  if [ "$should_be_dark" = "true" ] && [ "$current_dark_mode" = "false" ]; then
-    echo "Switching system to dark mode..."
-    osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to true'
-  elif [ "$should_be_dark" = "false" ] && [ "$current_dark_mode" = "true" ]; then
-    echo "Switching system to light mode..."
-    osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to false'
-  fi
-}
-
-# Function to determine if theme is dark or light
-is_dark_theme() {
-  case "$THEME" in
-  "catppuccin-latte" | "gruvbox-light" | "everforest-light" | "snow" | "flexoki-light" | "milky-matcha" | "rose-pine" | "solarized")
-    return 1 # Light theme
-    ;;
-  *)
-    return 0 # Dark theme
-    ;;
-  esac
-}
-
-# Function to apply wallpaper based on theme
-apply_wallpaper() {
-  local wallpaper_dir="$THEME_DIR/wallpapers"
-  local wallpaper_jpg="$wallpaper_dir/${THEME}.jpg"
-  local wallpaper_png="$wallpaper_dir/${THEME}.png"
-  local wallpaper_path=""
-
-  if [ -f "$wallpaper_jpg" ]; then
-    wallpaper_path="$wallpaper_jpg"
-  elif [ -f "$wallpaper_png" ]; then
-    wallpaper_path="$wallpaper_png"
-  fi
-
-  if [ -n "$wallpaper_path" ]; then
-    echo "Applying wallpaper for theme: $THEME (all displays and spaces)"
-    osascript <<EOF
-tell application "System Events"
-  set desktopCount to count of desktops
-  repeat with desktopNumber from 1 to desktopCount
-    tell desktop desktopNumber
-      set picture to "$wallpaper_path"
-    end tell
-  end repeat
-end tell
-EOF
-  fi
-}
-
-# Apply the selected theme
-# apply_iterm_theme
-apply_tmux_theme
-apply_alacritty_theme
-apply_ghostty_theme
-apply_neovim_theme
-apply_wallpaper
-
-# Auto-switch system dark mode based on theme
-if is_dark_theme; then
-  set_system_dark_mode "true"
+# Set system dark/light mode based on light.mode file presence
+if [ -f "$THEME_PATH/light.mode" ]; then
+  osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to false' 2>/dev/null
+  echo "  system: light mode"
 else
-  set_system_dark_mode "false"
+  osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to true' 2>/dev/null
+  echo "  system: dark mode"
 fi
 
-echo "Theme applied: $THEME"
-echo "Restart your terminal for a full theme change."
+# Save current theme
+echo "$THEME" >"$CURRENT_THEME_FILE"
+
+echo "Done!"

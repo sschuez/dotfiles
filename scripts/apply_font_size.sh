@@ -1,29 +1,45 @@
 #!/usr/bin/env bash
 
-# Set the base path for your dotfiles
-DOTFILES_PATH="$HOME/code/dotfiles"
+DOTFILES="$HOME/code/dotfiles"
+ALACRITTY_SIZE_FILE="$DOTFILES/alacritty/font-size.toml"
+GHOSTTY_SIZE_FILE="$DOTFILES/ghostty/font-size.conf"
 
-FONT_SIZE=$(gum choose "12" "13" "14" "15" "16" "18" "20" "22" "Cancel" --header "Choose your font size:" --height 6 | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
+# Write font size to both configs
+write_font_size() {
+  local size=$1
 
-# If the user chooses "Cancel" or no selection is made, exit the script
-if [ -z "$FONT_SIZE" ] || [ "$FONT_SIZE" = "cancel" ]; then
-	echo "No font size selected. Exiting..."
-	exit 0
-fi
+  # Alacritty
+  echo "[font]" > "$ALACRITTY_SIZE_FILE"
+  echo "size = $size" >> "$ALACRITTY_SIZE_FILE"
 
-# Ensure the Alacritty config directory exists
-ALACRITTY_CONFIG_DIR="$HOME/.config/alacritty"
-mkdir -p "$ALACRITTY_CONFIG_DIR"
+  # Ghostty
+  echo "font-size = $size" > "$GHOSTTY_SIZE_FILE"
 
-# Create the new font size configuration
-echo "[font]" >"$DOTFILES_PATH/alacritty/font-size.toml"
-echo "size = $FONT_SIZE" >>"$DOTFILES_PATH/alacritty/font-size.toml"
+  # Reload Ghostty
+  killall -SIGUSR2 ghostty 2>/dev/null || true
+}
 
-# Update Ghostty font size
-echo "# Ghostty font size (switched by apply_font_size.sh)" > "$DOTFILES_PATH/ghostty/font-size.conf"
-echo "font-size = $FONT_SIZE" >> "$DOTFILES_PATH/ghostty/font-size.conf"
-# Signal Ghostty to reload
-killall -SIGUSR2 ghostty 2>/dev/null || true
+# Get current font size
+get_current_size() {
+  grep 'size' "$ALACRITTY_SIZE_FILE" 2>/dev/null | awk '{print $3}' || echo "14"
+}
 
-# Logging for debugging
-echo "Font size $FONT_SIZE applied successfully!"
+CURRENT=$(get_current_size)
+
+# Build menu with current size indicator
+build_menu() {
+  for size in 12 13 14 15 16 18 20 22; do
+    [ "$size" = "$CURRENT" ] && echo "$size *" || echo "$size"
+  done
+  echo "Cancel"
+}
+
+SELECTION=$(build_menu | gum choose --header "Choose font size (current: $CURRENT):")
+
+[[ -z "$SELECTION" || "$SELECTION" == "Cancel" ]] && echo "No size selected." && exit 0
+
+# Remove the " *" suffix if present
+SIZE="${SELECTION% \*}"
+
+write_font_size "$SIZE"
+echo "Font size set to $SIZE"

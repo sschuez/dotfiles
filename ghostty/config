@@ -24,3 +24,6 @@ background-opacity = 0.98
 
 # Shell - no login flag since we immediately exec into tmux anyway
 command = /opt/homebrew/bin/bash
+
+# Quit Ghostty when last window closes
+quit-after-last-window-closed = true

@@ -29,6 +29,7 @@ sed -i '' "s/COLOR_MODE_FG/${COLOR_mode_fg}/g" "$output"
 sed -i '' "s/COLOR_MODE_BG/${COLOR_mode_bg}/g" "$output"
 
 # Reload tmux config if tmux is running
-if tmux info &> /dev/null; then
-    tmux source-file "$output" 2>/dev/null || true
+if tmux info &>/dev/null; then
+  tmux source-file "$output" 2>/dev/null || true
 fi
+

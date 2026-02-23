@@ -73,10 +73,46 @@ fi
 
 log "Project detected: rails=$IS_RAILS docker=$IS_DOCKER"
 
-# --- Port allocation helpers (reused from setup-agent.sh) ---
+# --- Port allocation helpers ---
+
+# Collect ports already claimed by sibling worktrees (even if stopped).
+# Checks .env (APP_PORT=) and compose files ("HOST:3000" mappings).
+collect_claimed_ports() {
+  local worktrees_dir="${CWD}/.claude/worktrees"
+  [ -d "$worktrees_dir" ] || return
+
+  for wt_dir in "$worktrees_dir"/*/; do
+    [ -d "$wt_dir" ] || continue
+    # Skip the worktree we're currently creating
+    [ "$wt_dir" = "${WORKTREE_DIR}/" ] && continue
+
+    # .env: APP_PORT=XXXX
+    if [ -f "${wt_dir}.env" ]; then
+      grep "^APP_PORT=" "${wt_dir}.env" 2>/dev/null | cut -d= -f2
+    fi
+
+    # compose files: "XXXX:3000"
+    for cf in docker-compose.yml compose.yml; do
+      if [ -f "${wt_dir}${cf}" ]; then
+        grep -oE '"[0-9]+:3000"' "${wt_dir}${cf}" 2>/dev/null | tr -d '"' | cut -d: -f1
+      fi
+    done
+  done
+}
+
+# Build a newline-separated list of all claimed ports (once, before allocation)
+CLAIMED_PORTS=$(collect_claimed_ports | sort -u)
+
+is_port_claimed() {
+  local port=$1
+  echo "$CLAIMED_PORTS" | grep -qx "$port"
+}
 
 is_port_in_use() {
   local port=$1
+  # Check against ports reserved by sibling worktrees (even if stopped)
+  is_port_claimed "$port" && return 0
+  # Check live listeners
   docker ps --format "table {{.Ports}}" 2>/dev/null | grep -q ":${port}->" && return 0
   lsof -iTCP:${port} -sTCP:LISTEN &>/dev/null && return 0
   return 1

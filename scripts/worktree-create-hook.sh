@@ -6,7 +6,7 @@
 
 # --- Phase 1: Parse input and create worktree (must succeed) ---
 
-INPUT=$(cat)
+read -r INPUT
 
 # Extract fields (jq preferred, sed fallback)
 if command -v jq &>/dev/null; then
@@ -30,9 +30,9 @@ mkdir -p "$(dirname "$WORKTREE_DIR")"
 
 # Create git worktree
 CURRENT_BRANCH=$(git -C "$CWD" branch --show-current 2>/dev/null || echo "HEAD")
-if ! git -C "$CWD" worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR" "$CURRENT_BRANCH" 2>&1 >&2; then
+if ! git -C "$CWD" worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR" "$CURRENT_BRANCH" >&2; then
   # Branch might already exist, try without -b
-  if ! git -C "$CWD" worktree add "$WORKTREE_DIR" "$BRANCH_NAME" 2>&1 >&2; then
+  if ! git -C "$CWD" worktree add "$WORKTREE_DIR" "$BRANCH_NAME" >&2; then
     echo "Error: failed to create git worktree" >&2
     exit 1
   fi

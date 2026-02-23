@@ -40,7 +40,7 @@ build_menu() {
 }
 
 # Select theme with gum
-SELECTION=$(build_menu | gum choose --header "Choose your theme")
+SELECTION=$(build_menu | gum filter --header "Choose your theme")
 
 # Handle cancel or no selection
 [[ -z "$SELECTION" || "$SELECTION" == "Cancel" ]] && echo "No theme selected." && exit 0

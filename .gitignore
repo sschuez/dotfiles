@@ -10,6 +10,9 @@ ghostty/theme.conf
 themes/.current
 fonts/.current
 
+# Claude Code worktrees
+.claude/worktrees/
+
 # macOS
 .DS_Store
 **/.DS_Store

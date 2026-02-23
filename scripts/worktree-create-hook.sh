@@ -28,9 +28,11 @@ BRANCH_NAME="worktree-${NAME}"
 # Ensure parent directory exists
 mkdir -p "$(dirname "$WORKTREE_DIR")"
 
+# Branch from current branch (override with WORKTREE_BASE=<branch> if needed)
+BASE_BRANCH="${WORKTREE_BASE:-$(git -C "$CWD" branch --show-current 2>/dev/null || echo "HEAD")}"
+
 # Create git worktree
-CURRENT_BRANCH=$(git -C "$CWD" branch --show-current 2>/dev/null || echo "HEAD")
-if ! git -C "$CWD" worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR" "$CURRENT_BRANCH" >&2; then
+if ! git -C "$CWD" worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR" "$BASE_BRANCH" >&2; then
   # Branch might already exist, try without -b
   if ! git -C "$CWD" worktree add "$WORKTREE_DIR" "$BRANCH_NAME" >&2; then
     echo "Error: failed to create git worktree" >&2

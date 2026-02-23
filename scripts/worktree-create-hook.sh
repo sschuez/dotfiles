@@ -171,7 +171,7 @@ if [ -f "$WT_ENV" ] && [ -f "$MAIN_ENV" ]; then
     echo ""
     echo "# Variables from main worktree"
     grep -v "^COMPOSE_PROJECT_NAME\|^POSTGRES_DB\|^APP_PORT\|^CHROME_PORT\|^#\|^$" "$MAIN_ENV" 2>/dev/null || true
-  } >> "$WT_ENV"
+  } >>"$WT_ENV"
 elif [ ! -f "$WT_ENV" ] && [ -f "$MAIN_ENV" ]; then
   log "Copying .env from main worktree"
   cp "$MAIN_ENV" "$WT_ENV"
@@ -213,7 +213,7 @@ if $IS_RAILS && [ -f "${CWD}/config/master.key" ]; then
       echo ""
       echo "# Rails master key (auto-added by worktree hook)"
       echo "RAILS_MASTER_KEY=$MASTER_KEY"
-    } >> "$WT_ENV"
+    } >>"$WT_ENV"
     log "Added RAILS_MASTER_KEY to .env"
   fi
 fi

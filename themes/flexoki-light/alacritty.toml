@@ -32,6 +32,10 @@ red = "#D14D41"
 white = "#FFFCF0"
 yellow = "#D0A215"
 
+[colors.selection]
+text = "#FFFCF0"
+background = "#205EA6"
+
 [colors.primary]
 background = "#FFFCF0"
 bright_foreground = "#100F0F"

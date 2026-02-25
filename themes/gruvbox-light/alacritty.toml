@@ -5,6 +5,10 @@ background = '#fbf1c7'
 # soft contrast background = = '#f2e5bc'
 foreground = '#3c3836'
 
+[colors.selection]
+text = '#fbf1c7'
+background = '#458588'
+
 # Normal colors
 [colors.normal]
 black = '#fbf1c7'

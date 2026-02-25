@@ -3,6 +3,10 @@
 background = "0x282828"
 foreground = "0xd4be98"
 
+[colors.selection]
+text = "#ebdbb2"
+background = "#d65d0e"
+
 [colors.normal]
 black = "0x3c3836"
 red = "0xea6962"

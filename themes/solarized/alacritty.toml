@@ -5,6 +5,10 @@
 background = '#fdf6e3'
 foreground = '#586e75'
 
+[colors.selection]
+text = '#fdf6e3'
+background = '#268bd2'
+
 # Normal colors
 [colors.normal]
 black = '#073642'

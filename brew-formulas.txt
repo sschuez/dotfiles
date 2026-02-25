@@ -1,4 +1,5 @@
 abseil
+ada-url
 aom
 aribb24
 at-spi2-core
@@ -12,13 +13,11 @@ brotli
 c-ares
 ca-certificates
 cairo
-cffi
 cfitsio
 cgif
 cjson
 cmake
 codex
-cryptography
 dav1d
 dbus
 docker
@@ -34,6 +33,7 @@ ffmpeg@6
 fftw
 fish
 flac
+fmt
 fontconfig
 freetype
 frei0r
@@ -58,6 +58,7 @@ gnupg
 gnutls
 gobject-introspection
 gpgme
+gpgmepp
 graphene
 graphite2
 gsettings-desktop-schemas
@@ -66,7 +67,9 @@ gtk+3
 gtk4
 gum
 harfbuzz
+hasura-cli
 hdf5
+hdrhistogram_c
 heroku
 hicolor-icon-theme
 highway
@@ -96,6 +99,7 @@ libassuan
 libb2
 libbluray
 libcuefile
+libdatrie
 libde265
 libdeflate
 libdicom
@@ -107,6 +111,7 @@ libgit2
 libgit2@1.7
 libgpg-error
 libheif
+libiconv
 libidn
 libidn2
 libimagequant
@@ -136,12 +141,14 @@ libsndfile
 libsodium
 libsoup
 libsoxr
-libspng
 libssh
 libssh2
 libtasn1
+libthai
 libtiff
 libtool
+libudfread
+libultrahdr
 libunibreak
 libunistring
 libusb
@@ -162,8 +169,10 @@ libxml2
 libxrender
 libxtst
 libyaml
+libzip
 little-cms2
-llvm@19
+llhttp
+llvm
 lpeg
 lua
 luajit
@@ -173,6 +182,7 @@ lzo
 m4
 make
 mbedtls
+mbedtls@3
 mc
 mise
 mozjpeg
@@ -184,6 +194,7 @@ ncdu
 ncurses
 neovim
 nettle
+nlohmann-json
 nmap
 node
 npth
@@ -198,11 +209,15 @@ opencode
 opencore-amr
 openexr
 openjpeg
+openjph
 openslide
+openssl@1.1
 openssl@3
+openssl@3.5
 openvino
 opus
 orc
+overmind
 p11-kit
 pango
 pcre2
@@ -217,11 +232,10 @@ postgresql@15
 protobuf
 pugixml
 py3cairo
-pycparser
 pygobject3
-python-packaging
 python@3.12
 python@3.13
+python@3.14
 rav1e
 readline
 redis
@@ -250,6 +264,7 @@ theora
 tmux
 tree
 tree-sitter
+tree-sitter@0.25
 unbound
 unibilium
 usage

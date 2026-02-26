@@ -220,4 +220,55 @@ if $IS_RAILS && [ -f "${CWD}/config/master.key" ]; then
   fi
 fi
 
+# --- Bundler setup ---
+# .bundle/ and vendor/bundle/ are gitignored, so worktrees don't get them.
+# Point Bundler at the main repo's vendor/bundle via absolute path so linters
+# and other bundle exec commands use the same gem set.
+
+if [ -f "${CWD}/.bundle/config" ] && [ -d "${CWD}/vendor/bundle" ]; then
+  mkdir -p "${WORKTREE_DIR}/.bundle"
+  cat > "${WORKTREE_DIR}/.bundle/config" <<BUNDLEEOF
+---
+BUNDLE_PATH: "${CWD}/vendor/bundle"
+BUNDLEEOF
+  log "Created .bundle/config pointing to main repo's vendor/bundle"
+fi
+
+# --- RuboCop hidden-path workaround ---
+# When cwd is under a dot-directory, RuboCop's hidden_path? check breaks
+# AllCops.Exclude. Patch bin/rubocop to pass explicit targets instead of ".".
+
+if [ -f "${WORKTREE_DIR}/bin/rubocop" ] && ! grep -q "Worktree fix" "${WORKTREE_DIR}/bin/rubocop" 2>/dev/null; then
+  ruby -e '
+    content = File.read(ARGV[0])
+    fix = <<~RUBY
+
+      # Worktree fix: when cwd is under a dot-directory (e.g. .claude/worktrees/),
+      # RuboCop'\''s hidden_path? check breaks AllCops.Exclude. Pass explicit targets
+      # so the exclude patterns work normally. Only activates when no file arguments
+      # are given and cwd contains a hidden path component.
+      if ARGV.none? { |arg| !arg.start_with?("-") } && Dir.pwd.split(File::SEPARATOR).any? { |d| d.start_with?(".") && d.length > 1 }
+        targets = %w[app config db lib test Gemfile Rakefile config.ru].select { |t| File.exist?(t) }
+        ARGV.push(*targets)
+      end
+    RUBY
+    patched = content.sub(/^(load Gem\.bin_path)/, fix + "\n\\1")
+    File.write(ARGV[0], patched)
+  ' "${WORKTREE_DIR}/bin/rubocop" 2>/dev/null && log "Patched bin/rubocop for hidden-path workaround" || true
+fi
+
+# --- mise trust ---
+# Worktree copies of mise.toml aren't trusted by default.
+
+if command -v mise &>/dev/null; then
+  if [ -f "${WORKTREE_DIR}/mise.toml" ]; then
+    mise trust "${WORKTREE_DIR}/mise.toml" 2>/dev/null || true
+    log "Trusted mise.toml"
+  fi
+  if [ -f "${WORKTREE_DIR}/.mise.toml" ]; then
+    mise trust "${WORKTREE_DIR}/.mise.toml" 2>/dev/null || true
+    log "Trusted .mise.toml"
+  fi
+fi
+
 exit 0

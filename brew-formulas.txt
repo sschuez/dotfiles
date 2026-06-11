@@ -1,4 +1,5 @@
 abseil
+actionlint
 ada-url
 aom
 aribb24
@@ -56,6 +57,7 @@ gmp
 gnu-sed
 gnupg
 gnutls
+go
 gobject-introspection
 gpgme
 gpgmepp
@@ -68,6 +70,7 @@ gtk4
 gum
 harfbuzz
 hasura-cli
+hcloud
 hdf5
 hdrhistogram_c
 heroku
@@ -76,12 +79,10 @@ highway
 hwloc
 icu4c@74
 icu4c@76
-icu4c@77
 icu4c@78
 imagemagick
 imath
 isl
-jasper
 jbig2dec
 jpeg-turbo
 jpeg-xl
@@ -111,7 +112,6 @@ libgit2
 libgit2@1.7
 libgpg-error
 libheif
-libiconv
 libidn
 libidn2
 libimagequant
@@ -169,7 +169,6 @@ libxml2
 libxrender
 libxtst
 libyaml
-libzip
 little-cms2
 llhttp
 llvm
@@ -184,12 +183,14 @@ make
 mbedtls
 mbedtls@3
 mc
+merve
 mise
 mozjpeg
 mpdecimal
 mpfr
 mpg123
 musepack
+nbytes
 ncdu
 ncurses
 neovim
@@ -246,8 +247,9 @@ ruby-build
 rust
 s3cmd
 sdl2
-shared-mime-info
+shellcheck
 simdjson
+simdutf
 sketchybar
 snappy
 speex
@@ -264,7 +266,6 @@ theora
 tmux
 tree
 tree-sitter
-tree-sitter@0.25
 unbound
 unibilium
 usage
@@ -284,6 +285,7 @@ z3
 zellij
 zeromq
 zimg
+zizmor
 zoxide
 zsh-completions
 zstd

@@ -2,6 +2,7 @@
 export EDITOR="nvim"
 export SUDO_EDITOR="$EDITOR"
 
+
 # Essential environment variables from your current setup
 export HOMEBREW_NO_ANALYTICS=1
 export LANG=en_US.UTF-8
@@ -21,8 +22,6 @@ export RUBY_CONFIGURE_OPTS="--with-libyaml-dir=/opt/homebrew/opt/libyaml"
 # Development paths
 export PATH="$HOME/.rbenv/bin:./bin:./node_modules/.bin:$PATH:/usr/local/sbin:$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH:/Users/stephenschuz/.local/bin"
 
-# Node Version Manager
-export NVM_DIR="$HOME/.nvm"
 
 # Source your custom API keys if they exist
 if [ -f ~/code/dotfiles/api_keys ]; then
@@ -31,3 +30,7 @@ fi
 
 # Bat theme (for better file previews)
 export BAT_THEME=ansi
+
+# Claude Code: append-only rendering to avoid TUI corruption on Ghostty
+# (in-place repaints drift out of sync with Ghostty's synchronized output).
+export CLAUDE_CODE_NO_FLICKER=1

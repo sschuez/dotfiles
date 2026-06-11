@@ -198,6 +198,18 @@ if $IS_RAILS && [ -f "${CWD}/config/master.key" ]; then
   cp "${CWD}/config/master.key" "${WORKTREE_DIR}/config/master.key"
   chmod 600 "${WORKTREE_DIR}/config/master.key"
 
+  # Per-environment keys (development.key, production.key, testing.key, etc.)
+  if [ -d "${CWD}/config/credentials" ]; then
+    mkdir -p "${WORKTREE_DIR}/config/credentials"
+    for keyfile in "${CWD}"/config/credentials/*.key; do
+      [ -f "$keyfile" ] || continue
+      dest="${WORKTREE_DIR}/config/credentials/$(basename "$keyfile")"
+      cp "$keyfile" "$dest"
+      chmod 600 "$dest"
+      log "Copied credentials/$(basename "$keyfile")"
+    done
+  fi
+
   # credentials.yml.enc
   if [ -f "${CWD}/config/credentials.yml.enc" ] && [ ! -f "${WORKTREE_DIR}/config/credentials.yml.enc" ]; then
     cp "${CWD}/config/credentials.yml.enc" "${WORKTREE_DIR}/config/credentials.yml.enc"

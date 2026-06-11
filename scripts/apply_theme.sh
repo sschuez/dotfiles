@@ -72,6 +72,17 @@ tmux info &>/dev/null && tmux source-file "$HOME/code/dotfiles/tmux/.tmux.conf" 
 # Reload Ghostty
 killall -SIGUSR2 ghostty 2>/dev/null || true
 
+# Dynamically update cursor color (SIGUSR2 doesn't update existing Ghostty cursors)
+cursor_color=$(grep -m1 '^cursor-color' "$THEME_PATH/ghostty.conf" 2>/dev/null | sed 's/cursor-color[[:space:]]*=[[:space:]]*//')
+if [ -n "$cursor_color" ]; then
+  [[ "$cursor_color" != \#* ]] && cursor_color="#$cursor_color"
+  if [ -n "$TMUX" ]; then
+    printf '\ePtmux;\e\e]12;%s\a\e\\' "$cursor_color"
+  else
+    printf '\e]12;%s\a' "$cursor_color"
+  fi
+fi
+
 # Apply wallpaper
 for ext in jpg png; do
   wallpaper="$THEME_PATH/wallpaper.$ext"

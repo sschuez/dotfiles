@@ -89,7 +89,7 @@ outer.right = 5
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#exec-and-forget
 # Open terminal with alt + enter shortcut (like in i3)
-alt-enter = 'exec-and-forget open -na "Ghostty"'
+alt-enter = 'exec-and-forget open -na "Alacritty"'
 alt-backslash = 'exec-and-forget open -a "1Password"'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#layout

@@ -15,6 +15,6 @@ if [ -z "${BASH_COMPLETION_VERSINFO:-}" ]; then
   fi
 fi
 
-# Set complete path
-export PATH="./bin:$HOME/.local/bin:$PATH"
+# PATH is built in bash/envs. Disable command hashing so the relative
+# ./bin entries are re-scanned on every lookup as you change directories.
 set +h

@@ -8,15 +8,16 @@ alias cd="zd"
 zd() {
   if [ $# -eq 0 ]; then
     builtin cd ~ && return
-  elif [ -d "$1" ]; then
+  elif [ "$1" = "-" ] || [ -d "$1" ]; then
     builtin cd "$1"
   else
     z "$@" && printf " \U000F17A9 " && pwd || echo "Error: Directory not found"
   fi
 }
-# macOS equivalent of xdg-open
+# macOS equivalent of xdg-open. macOS `open` returns immediately, so no
+# backgrounding is needed (which would otherwise break `open -W` and pipes).
 open() {
-  command open "$@" >/dev/null 2>&1 &
+  command open "$@" >/dev/null 2>&1
 }
 
 # Directories

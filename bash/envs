@@ -10,17 +10,22 @@ export LC_ALL=en_US.UTF-8
 export THOR_MERGE="nvim -d"
 export DOCKER_BUILDKIT=1
 
-# Homebrew paths
-export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
-export PATH="/opt/homebrew/opt/openssl@3/bin:$PATH"
+# Homebrew compiler/pkg-config flags for openssl@3
 export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"
 export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"
 export PKG_CONFIG_PATH="/opt/homebrew/opt/openssl@3/lib/pkgconfig"
 # Hardcoded to avoid slow brew command on every shell startup
 export RUBY_CONFIGURE_OPTS="--with-libyaml-dir=/opt/homebrew/opt/libyaml"
 
-# Development paths
-export PATH="$HOME/.rbenv/bin:./bin:./node_modules/.bin:$PATH:/usr/local/sbin:$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH:/Users/stephenschuz/.local/bin"
+# PATH, highest priority first. Relative entries (./bin, node_modules/.bin)
+# are kept LAST so a repo's bin/ can't shadow real commands.
+PATH="/opt/homebrew/bin:/opt/homebrew/sbin"
+PATH="$PATH:/opt/homebrew/opt/openssl@3/bin"
+PATH="$PATH:$HOME/.rbenv/bin:$HOME/.local/bin"
+PATH="$PATH:$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin"
+PATH="$PATH:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+PATH="$PATH:./bin:./node_modules/.bin"
+export PATH
 
 
 # Source your custom API keys if they exist

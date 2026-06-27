@@ -3,6 +3,8 @@ shopt -s histappend
 HISTCONTROL=ignoreboth
 HISTSIZE=32768
 HISTFILESIZE="${HISTSIZE}"
+# Note: shared-across-tabs history is wired up in bash/init, after Starship
+# (which resets PROMPT_COMMAND), so our hook isn't clobbered.
 
 # Autocompletion
 if [ -z "${BASH_COMPLETION_VERSINFO:-}" ]; then

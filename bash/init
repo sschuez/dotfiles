@@ -56,6 +56,13 @@ if command -v fzf &> /dev/null && [[ -t 0 ]]; then
   # Skip completion for faster startup - load on demand
 fi
 
+# Shared history across all open tabs/windows. Registered here, AFTER Starship
+# (which resets PROMPT_COMMAND), so the hook survives. After each command:
+#   history -a  flush this shell's new lines to ~/.bash_history
+#   history -n  read lines other shells have appended since
+# Only the delta is touched, so cost is ~0.5ms/prompt even at HISTSIZE=32768.
+PROMPT_COMMAND="history -a; history -n; ${PROMPT_COMMAND:-}"
+
 # SSH Agent setup - only for login shells or if not already running
 if [[ ! -n "$SSH_AUTH_SOCK" ]]; then
   SSH_ENV="$HOME/.ssh/environment"

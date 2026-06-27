@@ -1,3 +1,4 @@
+[general]
 import = [
   "~/code/dotfiles/alacritty/theme.toml",
   "~/code/dotfiles/alacritty/font.toml",

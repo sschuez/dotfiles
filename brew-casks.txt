@@ -1,6 +1,8 @@
 1password-cli
 aerospace
+alacritty
 codex
+exo
 ghostty
 memory-cleaner
 ngrok

@@ -63,6 +63,8 @@ echo "Applying theme: $THEME"
 # Apply all configs
 apply_config "$THEME_PATH/tmux.conf" "$HOME/code/dotfiles/tmux/theme.conf" "tmux"
 apply_config "$THEME_PATH/alacritty.toml" "$HOME/.config/alacritty/theme.toml" "alacritty"
+# Nudge Alacritty's live_config_reload to re-read the imported theme
+touch "$HOME/code/dotfiles/alacritty/alacritty.toml"
 apply_config "$THEME_PATH/ghostty.conf" "$HOME/.config/ghostty/theme.conf" "ghostty"
 apply_config "$THEME_PATH/neovim.lua" "$HOME/.config/nvim/lua/plugins/theme.lua" "neovim"
 

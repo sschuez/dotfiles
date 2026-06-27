@@ -1,7 +1,10 @@
 [env]
-TERM = "xterm-256color"
+# Use Alacritty's own terminfo so the tmux `alacritty:*` overrides
+# (RGB truecolor + italics/undercurl) apply. The `alacritty` terminfo
+# entry ships with Alacritty; verify with `infocmp alacritty`.
+TERM = "alacritty"
 
-[shell]
+[terminal.shell]
 program = "/opt/homebrew/bin/bash"
 args = ["--login"]
 
@@ -10,6 +13,11 @@ padding.x = 10
 padding.y = 10
 decorations = "Buttonless"
 opacity = 0.98
+
+[[keyboard.bindings]]
+key = "Return"
+mods = "Shift"
+chars = "\u001b\r"
 
 # [keyboard]
 # bindings = [

@@ -148,16 +148,29 @@ if $IS_DOCKER && command -v docker &>/dev/null; then
     (cd "$WORKTREE_DIR" && bin/docker-env setup "$CLEAN_NAME" "$APP_PORT") >&2 2>&1 || true
 
   elif [ -n "$COMPOSE_FILE" ] && [ -f "${WORKTREE_DIR}/${COMPOSE_FILE}" ]; then
-    # Path B: compose file only — rewrite port mappings
+    # Path B: compose file only.
     DEBUG_PORT=$((APP_PORT + 1233))
     CHROME_PORT=$((APP_PORT + 4899))
 
-    log "Rewriting ports in $COMPOSE_FILE: app=$APP_PORT debug=$DEBUG_PORT chrome=$CHROME_PORT"
-    sed -i '' \
-      -e "s/\"3000:3000\"/\"$APP_PORT:3000\"/g" \
-      -e "s/\"1234:1234\"/\"$DEBUG_PORT:1234\"/g" \
-      -e "s/\"7900:7900\"/\"$CHROME_PORT:7900\"/g" \
-      "${WORKTREE_DIR}/${COMPOSE_FILE}" 2>/dev/null || true
+    if grep -q '${APP_PORT' "${WORKTREE_DIR}/${COMPOSE_FILE}" 2>/dev/null; then
+      # Compose uses ${APP_PORT}/${DEBUG_PORT}/${CHROME_PORT} interpolation —
+      # write the ports to .env and let compose read them (submissio-style).
+      log "Writing ports to .env: app=$APP_PORT debug=$DEBUG_PORT chrome=$CHROME_PORT"
+      {
+        echo "# Ports (auto-assigned by worktree hook)"
+        echo "APP_PORT=$APP_PORT"
+        echo "DEBUG_PORT=$DEBUG_PORT"
+        echo "CHROME_PORT=$CHROME_PORT"
+      } >>"${WORKTREE_DIR}/.env"
+    else
+      # Literal ports — rewrite the canonical mappings in place.
+      log "Rewriting ports in $COMPOSE_FILE: app=$APP_PORT debug=$DEBUG_PORT chrome=$CHROME_PORT"
+      sed -i '' \
+        -e "s/\"3000:3000\"/\"$APP_PORT:3000\"/g" \
+        -e "s/\"1234:1234\"/\"$DEBUG_PORT:1234\"/g" \
+        -e "s/\"7900:7900\"/\"$CHROME_PORT:7900\"/g" \
+        "${WORKTREE_DIR}/${COMPOSE_FILE}" 2>/dev/null || true
+    fi
   fi
 fi
 

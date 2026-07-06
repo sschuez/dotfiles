@@ -166,6 +166,31 @@ If migrating from rbenv to mise for Ruby version management:
 
 The dotfiles already handle mise as the primary version manager with automatic fallback to individual tools.
 
+## Claude Code Worktree Hooks
+
+`scripts/worktree-create-hook.sh` and `scripts/worktree-cleanup-hook.sh` power Claude Code's `--worktree` / `isolation: "worktree"` feature (wired up as `WorktreeCreate`/`WorktreeRemove` hooks in `~/.claude/settings.json`). They create/remove git worktrees under `<repo>/.claude/worktrees/<name>` with automatic environment isolation. The script headers document the full design; the short version:
+
+**Create hook** (layered — each layer is best-effort, failures never block worktree creation):
+
+| Layer | Applies to | What it does |
+|---|---|---|
+| Base | any repo | worktree + branch `worktree-<name>`, `.env` copied from main checkout (or `.env.example`/`.template`/`.sample`) |
+| Docker | compose/`bin/docker-env` repos | unique free ports, `COMPOSE_PROJECT_NAME=<repo>_<name>` pinned in `.env` (no container/volume collisions across worktrees or repos) |
+| Rails | Rails repos | `master.key`, `config/credentials/*.key`, `credentials.yml.enc`, `database.yml`, `RAILS_MASTER_KEY` in `.env` |
+| Extension | repos with `bin/worktree-setup` | runs it last, inside the worktree, with `WORKTREE_DIR`, `MAIN_DIR`, `WORKTREE_NAME`, `APP_PORT` exported |
+
+**Cleanup hook**: `docker compose down -v` (project name read from the worktree's `.env`), removes leftover volumes/images, removes the worktree. Deletes the branch only if fully merged — unmerged work survives for manual review.
+
+**Making a repo worktree-ready** requires only parameterized compose ports:
+
+```yaml
+ports:
+  - "${APP_PORT:-3000}:3000"
+  - "${DEBUG_PORT:-1234}:1234"
+```
+
+Optionally add an executable `bin/worktree-setup` for anything project-specific (seed data, extra credentials, ...).
+
 ## Git Worktree & Docker Agent Setup
 
 The `setup-agent` script creates isolated development environments for AI agents or parallel development work. Each environment gets its own git worktree and Docker containers.

@@ -1,12 +1,54 @@
 #!/bin/bash
 # Claude Code WorktreeCreate hook
-# Reads {"name": "...", "cwd": "...", ...} from stdin
-# Creates git worktree, prints absolute path to stdout
-# Then does best-effort Docker/Rails setup (failures don't break worktree creation)
+#
+# Reads {"name": "...", "cwd": "...", ...} JSON from stdin, creates a git
+# worktree under <repo>/.claude/worktrees/<name>, prints its absolute path to
+# stdout (the ONLY stdout output — Claude Code reads it), then runs
+# best-effort project setup. Setup failures never break worktree creation.
+#
+# Layered design — what runs for every repo vs. per convention:
+#
+#   Always (any repo):
+#     - git worktree on branch "worktree-<name>", based off the current
+#       branch (override the base with WORKTREE_BASE=<branch>)
+#     - .env copied from the main checkout, or from
+#       .env.example/.env.template/.env.sample as fallback
+#     - bin/worktree-setup executed if the repo provides one (see below)
+#
+#   Docker repos (docker-compose.yml / compose.yml / bin/docker-env):
+#     Path A — repo has bin/docker-env: delegate to
+#       `bin/docker-env setup <name> <port>`; the repo owns ports,
+#       COMPOSE_PROJECT_NAME and DB names (e.g. submissio).
+#     Path B — compose file only:
+#       * PREFERRED: compose uses ${APP_PORT:-3000}-style vars -> unique
+#         APP_PORT / DEBUG_PORT / CHROME_PORT are written to the worktree
+#         .env and compose picks them up (e.g. gym)
+#       * legacy: literal ports -> the canonical "3000:3000" / "1234:1234" /
+#         "7900:7900" mappings are rewritten in place
+#       Either way COMPOSE_PROJECT_NAME=<repo>_<name> is pinned in .env so
+#       containers/volumes can't collide with the main checkout or with a
+#       same-named worktree in another repo — and so the cleanup hook can
+#       find the resources later.
+#
+#   Rails repos: master.key, config/credentials/*.key, credentials.yml.enc
+#     and database.yml copied from the main checkout; RAILS_MASTER_KEY
+#     appended to the worktree .env.
+#
+# Per-repo extension point — bin/worktree-setup:
+#   Drop an executable bin/worktree-setup into a repo for project-specific
+#   setup (seed data, node_modules linking, extra credentials, ...). It runs
+#   LAST, from inside the new worktree, with these variables exported:
+#     WORKTREE_DIR   absolute path of the new worktree
+#     MAIN_DIR       absolute path of the main checkout
+#     WORKTREE_NAME  the worktree's name
+#     APP_PORT       allocated app port (empty for non-Docker repos)
+#
+# Adopting this in a new repo needs only ONE thing: parameterize the compose
+# ports, e.g.  - "${APP_PORT:-3000}:3000". Everything else is optional.
 
 # --- Phase 1: Parse input and create worktree (must succeed) ---
 
-read -r INPUT
+INPUT=$(cat)
 
 # Extract fields (jq preferred, sed fallback)
 if command -v jq &>/dev/null; then
@@ -69,16 +111,24 @@ elif [ -f "${CWD}/bin/docker-env" ]; then
   IS_DOCKER=true
 fi
 
-if ! $IS_RAILS && ! $IS_DOCKER; then
-  exit 0
-fi
-
+# No early exit: .env setup and bin/worktree-setup below run for ANY repo;
+# the Docker/Rails sections guard themselves.
 log "Project detected: rails=$IS_RAILS docker=$IS_DOCKER"
+
+# In-place sed that works with both BSD (macOS) and GNU sed
+sed_inplace() {
+  if sed --version >/dev/null 2>&1; then
+    sed -i "$@"
+  else
+    sed -i '' "$@"
+  fi
+}
 
 # --- Port allocation helpers ---
 
 # Collect ports already claimed by sibling worktrees (even if stopped).
-# Checks .env (APP_PORT=) and compose files ("HOST:3000" mappings).
+# Harvests every *_PORT= var from their .env and the host side of every
+# literal "HOST:CONTAINER" mapping in their compose files.
 collect_claimed_ports() {
   local worktrees_dir="${CWD}/.claude/worktrees"
   [ -d "$worktrees_dir" ] || return
@@ -88,15 +138,15 @@ collect_claimed_ports() {
     # Skip the worktree we're currently creating
     [ "$wt_dir" = "${WORKTREE_DIR}/" ] && continue
 
-    # .env: APP_PORT / DEBUG_PORT / CHROME_PORT
+    # .env: any FOO_PORT=XXXX
     if [ -f "${wt_dir}.env" ]; then
-      grep -E "^(APP_PORT|DEBUG_PORT|CHROME_PORT)=" "${wt_dir}.env" 2>/dev/null | cut -d= -f2
+      grep -E "^[A-Z_]*PORT=[0-9]+$" "${wt_dir}.env" 2>/dev/null | cut -d= -f2
     fi
 
-    # compose files: host side of "XXXX:3000" / "XXXX:1234" / "XXXX:7900"
+    # compose files: host side of any literal "XXXX:YYYY" mapping
     for cf in docker-compose.yml compose.yml; do
       if [ -f "${wt_dir}${cf}" ]; then
-        grep -oE '"[0-9]+:(3000|1234|7900)"' "${wt_dir}${cf}" 2>/dev/null | tr -d '"' | cut -d: -f1
+        grep -oE '"[0-9]+:[0-9]+"' "${wt_dir}${cf}" 2>/dev/null | tr -d '"' | cut -d: -f1
       fi
     done
   done
@@ -138,6 +188,7 @@ find_next_port() {
     ((port++))
     ((attempt++))
   done
+  log "WARN: no free port found in $1-$((port - 1)), falling back to $1 (may conflict)"
   echo $1
   return 1
 }
@@ -146,10 +197,11 @@ find_next_port() {
 
 if $IS_DOCKER && command -v docker &>/dev/null; then
   APP_PORT=$(find_next_port 3001)
+  CLEAN_NAME=$(echo "$NAME" | sed 's/[^a-zA-Z0-9-]/-/g' | tr '[:upper:]' '[:lower:]')
 
   if [ -f "${CWD}/bin/docker-env" ] && [ -f "${WORKTREE_DIR}/bin/docker-env" ]; then
-    # Path A: bin/docker-env exists
-    CLEAN_NAME=$(echo "$NAME" | sed 's/[^a-zA-Z0-9-]/-/g' | tr '[:upper:]' '[:lower:]')
+    # Path A: bin/docker-env exists — the repo's script owns ports,
+    # COMPOSE_PROJECT_NAME and DB names.
     log "Running bin/docker-env setup $CLEAN_NAME $APP_PORT"
     (cd "$WORKTREE_DIR" && bin/docker-env setup "$CLEAN_NAME" "$APP_PORT") >&2 2>&1 || true
 
@@ -162,7 +214,7 @@ if $IS_DOCKER && command -v docker &>/dev/null; then
 
     if grep -q '${APP_PORT' "${WORKTREE_DIR}/${COMPOSE_FILE}" 2>/dev/null; then
       # Compose uses ${APP_PORT}/${DEBUG_PORT}/${CHROME_PORT} interpolation —
-      # write the ports to .env and let compose read them (submissio-style).
+      # write the ports to .env and let compose read them (preferred).
       log "Writing ports to .env: app=$APP_PORT debug=$DEBUG_PORT chrome=$CHROME_PORT"
       {
         echo "# Ports (auto-assigned by worktree hook)"
@@ -171,13 +223,26 @@ if $IS_DOCKER && command -v docker &>/dev/null; then
         echo "CHROME_PORT=$CHROME_PORT"
       } >>"${WORKTREE_DIR}/.env"
     else
-      # Literal ports — rewrite the canonical mappings in place.
+      # Literal ports — rewrite the canonical mappings in place (legacy).
       log "Rewriting ports in $COMPOSE_FILE: app=$APP_PORT debug=$DEBUG_PORT chrome=$CHROME_PORT"
-      sed -i '' \
+      sed_inplace \
         -e "s/\"3000:3000\"/\"$APP_PORT:3000\"/g" \
         -e "s/\"1234:1234\"/\"$DEBUG_PORT:1234\"/g" \
         -e "s/\"7900:7900\"/\"$CHROME_PORT:7900\"/g" \
         "${WORKTREE_DIR}/${COMPOSE_FILE}" 2>/dev/null || true
+    fi
+
+    # Pin a unique compose project name so containers/volumes can't collide
+    # with the main checkout (dir-basename default) or with a same-named
+    # worktree in another repo — and so the cleanup hook can find them
+    # (it reads COMPOSE_PROJECT_NAME from this .env).
+    if ! grep -q "^COMPOSE_PROJECT_NAME=" "${WORKTREE_DIR}/.env" 2>/dev/null; then
+      PROJECT_NAME=$(git -C "$CWD" remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git$#\1#p' | tr '[:upper:]' '[:lower:]' | tr '-' '_')
+      [ -z "$PROJECT_NAME" ] && PROJECT_NAME=$(basename "$CWD" | tr '[:upper:]' '[:lower:]' | tr '-' '_')
+      PROJECT_NAME=$(echo "$PROJECT_NAME" | sed 's/[^a-z0-9_]/_/g')
+      COMPOSE_PROJECT="${PROJECT_NAME}_$(echo "$CLEAN_NAME" | tr '-' '_')"
+      echo "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT" >>"${WORKTREE_DIR}/.env"
+      log "Pinned COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT"
     fi
   fi
 fi
@@ -188,12 +253,15 @@ MAIN_ENV="${CWD}/.env"
 WT_ENV="${WORKTREE_DIR}/.env"
 
 if [ -f "$WT_ENV" ] && [ -f "$MAIN_ENV" ]; then
-  # bin/docker-env already created .env — merge non-Docker vars from main
+  # Worktree .env already exists (docker-env or port allocation above) —
+  # merge main's vars, EXCLUDING anything worktree-specific: the allocated
+  # ports and compose/db identity must not be overridden by main's values
+  # (with duplicate keys, the later occurrence wins).
   log "Merging main .env into worktree .env"
   {
     echo ""
     echo "# Variables from main worktree"
-    grep -v "^COMPOSE_PROJECT_NAME\|^POSTGRES_DB\|^APP_PORT\|^CHROME_PORT\|^#\|^$" "$MAIN_ENV" 2>/dev/null || true
+    grep -vE "^(COMPOSE_PROJECT_NAME|POSTGRES_DB|APP_PORT|DEBUG_PORT|CHROME_PORT)=|^#|^$" "$MAIN_ENV" 2>/dev/null || true
   } >>"$WT_ENV"
 elif [ ! -f "$WT_ENV" ] && [ -f "$MAIN_ENV" ]; then
   log "Copying .env from main worktree"
@@ -302,6 +370,23 @@ if command -v mise &>/dev/null; then
     mise trust "${WORKTREE_DIR}/.mise.toml" 2>/dev/null || true
     log "Trusted .mise.toml"
   fi
+fi
+
+# --- Per-repo extension point ---
+# If the repo ships an executable bin/worktree-setup, run it LAST from inside
+# the new worktree for any project-specific setup the generic hook can't know
+# about. See the header of this file for the exported variables.
+
+if [ -x "${WORKTREE_DIR}/bin/worktree-setup" ]; then
+  log "Running bin/worktree-setup"
+  (
+    cd "$WORKTREE_DIR" &&
+      WORKTREE_DIR="$WORKTREE_DIR" \
+      MAIN_DIR="$CWD" \
+      WORKTREE_NAME="$NAME" \
+      APP_PORT="${APP_PORT:-}" \
+      bin/worktree-setup
+  ) >&2 2>&1 || log "bin/worktree-setup failed (non-fatal)"
 fi
 
 exit 0

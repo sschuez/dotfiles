@@ -1,12 +1,22 @@
 #!/bin/bash
 # Claude Code WorktreeRemove hook
-# Reads {"worktree_path": "...", "cwd": "...", ...} from stdin
-# Cleans up Docker resources, then removes the git worktree and branch
-# Exit 0 always — failures don't block Claude Code
+#
+# Reads {"worktree_path": "...", "cwd": "...", ...} JSON from stdin, tears
+# down the worktree's Docker resources (containers, volumes, images), then
+# removes the git worktree. Always exits 0 — failures never block Claude Code.
+#
+# Docker project resolution, in order:
+#   1. COMPOSE_PROJECT_NAME from the worktree's .env — this is what compose
+#      actually used (pinned there by the create hook or bin/docker-env)
+#   2. Derived <repo>_<worktree-name> (legacy fallback for worktrees created
+#      before the create hook pinned the project name)
+#
+# The worktree BRANCH is only deleted when fully merged (git branch -d).
+# Unmerged work survives as "worktree-<name>" — review or delete it manually.
 
 set +e
 
-read -r INPUT
+INPUT=$(cat)
 
 # Extract fields (jq preferred, sed fallback)
 if command -v jq &>/dev/null; then
@@ -48,10 +58,15 @@ if $HAS_DOCKER && command -v docker &>/dev/null; then
     echo "$git_name" | sed 's/[^a-z0-9_]/_/g'
   }
 
-  WT_NAME=$(basename "$WORKTREE_PATH")
-  CLEAN_NAME=$(echo "$WT_NAME" | sed 's/[^a-zA-Z0-9-]/-/g' | tr '[:upper:]' '[:lower:]' | tr '-' '_')
-  PROJECT_NAME=$(get_project_name "$CWD")
-  DOCKER_PROJECT="${PROJECT_NAME}_${CLEAN_NAME}"
+  # Prefer the project name compose actually used (pinned in the worktree
+  # .env by the create hook or bin/docker-env); derive it only as fallback.
+  DOCKER_PROJECT=$(grep "^COMPOSE_PROJECT_NAME=" "${WORKTREE_PATH}/.env" 2>/dev/null | tail -1 | cut -d= -f2)
+  if [ -z "$DOCKER_PROJECT" ]; then
+    WT_NAME=$(basename "$WORKTREE_PATH")
+    CLEAN_NAME=$(echo "$WT_NAME" | sed 's/[^a-zA-Z0-9-]/-/g' | tr '[:upper:]' '[:lower:]' | tr '-' '_')
+    PROJECT_NAME=$(get_project_name "$CWD")
+    DOCKER_PROJECT="${PROJECT_NAME}_${CLEAN_NAME}"
+  fi
 
   log "Cleaning Docker for project: $DOCKER_PROJECT"
 
@@ -94,10 +109,14 @@ if [ -d "$WORKTREE_PATH" ] && [ -n "$CWD" ]; then
   log "Removing git worktree: $WORKTREE_PATH"
   git -C "$CWD" worktree remove "$WORKTREE_PATH" --force 2>&1 | while read -r line; do log "$line"; done
 
-  # Delete the worktree branch
+  # Delete the worktree branch only if fully merged — unmerged work survives
+  # for manual review (git branch -d refuses to delete unmerged branches)
   if git -C "$CWD" rev-parse --verify "$BRANCH_NAME" &>/dev/null; then
-    log "Deleting branch: $BRANCH_NAME"
-    git -C "$CWD" branch -D "$BRANCH_NAME" 2>&1 | while read -r line; do log "$line"; done
+    if git -C "$CWD" branch -d "$BRANCH_NAME" >/dev/null 2>&1; then
+      log "Deleted merged branch: $BRANCH_NAME"
+    else
+      log "Branch $BRANCH_NAME has unmerged work — keeping it (delete manually when done)"
+    fi
   fi
 
   git -C "$CWD" worktree prune 2>/dev/null

@@ -175,6 +175,7 @@ The dotfiles already handle mise as the primary version manager with automatic f
 | Layer | Applies to | What it does |
 |---|---|---|
 | Base | any repo | worktree + branch `worktree-<name>`, `.env` copied from main checkout (or `.env.example`/`.template`/`.sample`) |
+| Port | non-Docker repos with a dev server (Rails / `Procfile` / `package.json`) | free `PORT` allocated and appended to `.env` (read by Puma via `bin/dev`/foreman/dotenv, and by Node dev servers) |
 | Docker | compose/`bin/docker-env` repos | unique free ports, `COMPOSE_PROJECT_NAME=<repo>_<name>` pinned in `.env` (no container/volume collisions across worktrees or repos) |
 | Rails | Rails repos | `master.key`, `config/credentials/*.key`, `credentials.yml.enc`, `database.yml`, `RAILS_MASTER_KEY` in `.env` |
 | Extension | repos with `bin/worktree-setup` | runs it last, inside the worktree, with `WORKTREE_DIR`, `MAIN_DIR`, `WORKTREE_NAME`, `APP_PORT` exported |

@@ -13,6 +13,8 @@
 #       branch (override the base with WORKTREE_BASE=<branch>)
 #     - .env copied from the main checkout, or from
 #       .env.example/.env.template/.env.sample as fallback
+#     - non-Docker repos with a dev server (Rails / Procfile / package.json):
+#       a free PORT is allocated and appended to .env
 #     - bin/worktree-setup executed if the repo provides one (see below)
 #
 #   Docker repos (docker-compose.yml / compose.yml / bin/docker-env):
@@ -41,7 +43,7 @@
 #     WORKTREE_DIR   absolute path of the new worktree
 #     MAIN_DIR       absolute path of the main checkout
 #     WORKTREE_NAME  the worktree's name
-#     APP_PORT       allocated app port (empty for non-Docker repos)
+#     APP_PORT       allocated app port (empty if no port was allocated)
 #
 # Adopting this in a new repo needs only ONE thing: parameterize the compose
 # ports, e.g.  - "${APP_PORT:-3000}:3000". Everything else is optional.
@@ -275,6 +277,25 @@ elif [ ! -f "$WT_ENV" ]; then
       break
     fi
   done
+fi
+
+# --- Dev server port (non-Docker) ---
+# Docker repos get isolated ports via compose above. For everything else
+# that looks like it runs a dev server, allocate a free PORT and append it
+# to .env — appended last so it wins over a PORT copied from main (with
+# duplicate keys, the later occurrence wins). Picked up by Puma via
+# bin/dev/foreman/dotenv, and by most Node dev servers.
+
+if ! $IS_DOCKER; then
+  if $IS_RAILS || [ -f "${WORKTREE_DIR}/Procfile.dev" ] || [ -f "${WORKTREE_DIR}/Procfile" ] || [ -f "${WORKTREE_DIR}/package.json" ]; then
+    APP_PORT=$(find_next_port 3001)
+    log "Assigned dev server PORT=$APP_PORT"
+    {
+      echo ""
+      echo "# Dev server port (auto-assigned by worktree hook)"
+      echo "PORT=$APP_PORT"
+    } >>"$WT_ENV"
+  fi
 fi
 
 # --- Rails credentials ---

@@ -88,15 +88,15 @@ collect_claimed_ports() {
     # Skip the worktree we're currently creating
     [ "$wt_dir" = "${WORKTREE_DIR}/" ] && continue
 
-    # .env: APP_PORT=XXXX
+    # .env: APP_PORT / DEBUG_PORT / CHROME_PORT
     if [ -f "${wt_dir}.env" ]; then
-      grep "^APP_PORT=" "${wt_dir}.env" 2>/dev/null | cut -d= -f2
+      grep -E "^(APP_PORT|DEBUG_PORT|CHROME_PORT)=" "${wt_dir}.env" 2>/dev/null | cut -d= -f2
     fi
 
-    # compose files: "XXXX:3000"
+    # compose files: host side of "XXXX:3000" / "XXXX:1234" / "XXXX:7900"
     for cf in docker-compose.yml compose.yml; do
       if [ -f "${wt_dir}${cf}" ]; then
-        grep -oE '"[0-9]+:3000"' "${wt_dir}${cf}" 2>/dev/null | tr -d '"' | cut -d: -f1
+        grep -oE '"[0-9]+:(3000|1234|7900)"' "${wt_dir}${cf}" 2>/dev/null | tr -d '"' | cut -d: -f1
       fi
     done
   done
@@ -114,11 +114,16 @@ is_port_in_use() {
   local port=$1
   # Check against ports reserved by sibling worktrees (even if stopped)
   is_port_claimed "$port" && return 0
+  # Check ports already allocated earlier in this same run
+  echo "$ALLOCATED_PORTS" | grep -qx "$port" && return 0
   # Check live listeners
   docker ps --format "table {{.Ports}}" 2>/dev/null | grep -q ":${port}->" && return 0
   lsof -iTCP:${port} -sTCP:LISTEN &>/dev/null && return 0
   return 1
 }
+
+# Ports handed out earlier in this run, so a later allocation can't reuse them.
+ALLOCATED_PORTS=""
 
 find_next_port() {
   local port=$1
@@ -126,6 +131,7 @@ find_next_port() {
   local attempt=0
   while [ $attempt -lt $max_attempts ]; do
     if ! is_port_in_use $port; then
+      ALLOCATED_PORTS="${ALLOCATED_PORTS}${port}"$'\n'
       echo $port
       return 0
     fi
@@ -149,8 +155,10 @@ if $IS_DOCKER && command -v docker &>/dev/null; then
 
   elif [ -n "$COMPOSE_FILE" ] && [ -f "${WORKTREE_DIR}/${COMPOSE_FILE}" ]; then
     # Path B: compose file only.
-    DEBUG_PORT=$((APP_PORT + 1233))
-    CHROME_PORT=$((APP_PORT + 4899))
+    # Allocate each port independently so debug/chrome can't collide with a
+    # sibling worktree or the main worktree's defaults (offsets alone don't check).
+    DEBUG_PORT=$(find_next_port 1234)
+    CHROME_PORT=$(find_next_port 7900)
 
     if grep -q '${APP_PORT' "${WORKTREE_DIR}/${COMPOSE_FILE}" 2>/dev/null; then
       # Compose uses ${APP_PORT}/${DEBUG_PORT}/${CHROME_PORT} interpolation —

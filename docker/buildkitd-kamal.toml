@@ -1,0 +1,13 @@
+# GC policy for the Kamal buildx builder (kamal-local-docker-container).
+#
+# Without this the builder has NO cache ceiling — it grew to 61.5 GB by
+# Aug 2026, larger than every dev database on the machine combined.
+# The default builder is capped separately via ~/.docker/daemon.json
+# (builder.gc.defaultKeepStorage), which this file deliberately does not touch.
+[worker.oci]
+  enabled = true
+  gc = true
+  # Hard ceiling: never let the Kamal build cache exceed this.
+  maxUsedSpace = "10GB"
+  # Never GC below this, so consecutive deploys stay warm.
+  reservedSpace = "2GB"

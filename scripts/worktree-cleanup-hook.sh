@@ -100,6 +100,47 @@ if $HAS_DOCKER && command -v docker &>/dev/null; then
   done
 fi
 
+# --- Host Postgres cleanup (per-worktree databases pinned in .env) ---
+#
+# Host runs (e.g. bin/ci) create per-worktree databases from POSTGRES_DB /
+# POSTGRES_TEST_DB in the worktree .env. Drop them with the worktree.
+# Guard: only names prefixed by COMPOSE_PROJECT_NAME count as per-worktree;
+# shared defaults (e.g. <repo>_development, <repo>_test) are never dropped.
+
+if [ -f "${WORKTREE_PATH}/.env" ] && command -v psql &>/dev/null; then
+  PG_ENV_FILE="${WORKTREE_PATH}/.env"
+  PG_PROJECT=$(grep "^COMPOSE_PROJECT_NAME=" "$PG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2)
+  PG_DEV_DB=$(grep "^POSTGRES_DB=" "$PG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2)
+  PG_TEST_DB=$(grep "^POSTGRES_TEST_DB=" "$PG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2)
+
+  drop_host_db() {
+    local db="$1"
+    case "$db" in
+      "${PG_PROJECT}"*) ;;
+      *) log "Skipping host DB (not worktree-scoped): $db"; return ;;
+    esac
+    case "$db" in
+      *[!a-z0-9_]*) log "Skipping host DB (unexpected characters): $db"; return ;;
+    esac
+    log "Dropping host database: $db"
+    psql -h localhost -p 5432 -d postgres -X -q \
+      -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE)" 2>&1 | while read -r line; do log "$line"; done
+  }
+
+  # PG_PROJECT must be non-empty: with an empty prefix the scope guard above
+  # would match every database name.
+  if [ -n "$PG_PROJECT" ] && psql -h localhost -p 5432 -d postgres -X -q -c "SELECT 1" &>/dev/null; then
+    if [ -n "$PG_DEV_DB" ]; then
+      for db in "$PG_DEV_DB" "${PG_DEV_DB}_cache" "${PG_DEV_DB}_queue" "${PG_DEV_DB}_cable"; do
+        drop_host_db "$db"
+      done
+    fi
+    if [ -n "$PG_TEST_DB" ]; then
+      drop_host_db "$PG_TEST_DB"
+    fi
+  fi
+fi
+
 # --- Git worktree and branch removal ---
 
 WT_NAME=$(basename "$WORKTREE_PATH")

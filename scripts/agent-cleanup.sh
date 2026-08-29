@@ -19,60 +19,18 @@ get_main_branch() {
   fi
 }
 
-# Auto-detect project name from directory or git remote (same as bin/docker-env)
-get_project_name() {
-  # First try to get from git remote origin
-  local git_name=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git$#\1#p' | tr '[:upper:]' '[:lower:]' | tr '-' '_')
-  
-  # Fallback to current directory name
-  if [[ -z "$git_name" ]]; then
-    git_name=$(basename "$PWD" | tr '[:upper:]' '[:lower:]' | tr '-' '_')
-  fi
-  
-  # Clean up any special characters
-  echo "$git_name" | sed 's/[^a-z0-9_]/_/g'
-}
+# worktree-cleanup-hook.sh owns the teardown: Docker containers, volumes and
+# images (by the COMPOSE_PROJECT_NAME the worktree .env pins), the per-worktree
+# host Postgres databases, then the git worktree itself. It is the same hook
+# Claude Code runs on WorktreeRemove, so both paths tear down identically.
+# Do not reimplement any of it here.
+HOOK="$(dirname "${BASH_SOURCE[0]}")/worktree-cleanup-hook.sh"
 
-# Function to check if bin/docker-env exists and clean Docker environment
-clean_docker_env() {
+# Remove one agent. The hook always exits 0, so judge it by the worktree.
+remove_agent() {
   local worktree_path="$1"
-  local branch_name="$2"
-  
-  # Extract clean name from branch (feat/xyz -> xyz)
-  local clean_name=$(echo "$branch_name" | sed 's#feat/##' | sed 's/[^a-zA-Z0-9-]/-/g')
-  
-  if [[ -z "$clean_name" ]]; then
-    return
-  fi
-  
-  # Check if docker-env exists in the worktree or main repo
-  local docker_env_script=""
-  if [[ -f "$worktree_path/bin/docker-env" ]]; then
-    docker_env_script="$worktree_path/bin/docker-env"
-  elif [[ -f "$MAIN_WORKTREE/bin/docker-env" ]]; then
-    docker_env_script="$MAIN_WORKTREE/bin/docker-env"
-  fi
-  
-  if [[ -n "$docker_env_script" ]]; then
-    local project_name=$(get_project_name)
-    local docker_project="${project_name}_${clean_name//-/_}"
-    
-    # Check if this Docker environment exists
-    if docker ps -a --format "{{.Names}}" | grep -q "^${docker_project}_"; then
-      gum style --foreground 117 "  🐳 Cleaning Docker environment: $docker_project"
-      
-      # Stop and remove containers
-      docker compose -p "${docker_project}" down -v 2>/dev/null || true
-
-      # Remove any lingering volumes
-      docker volume ls --format "{{.Name}}" | grep "^${docker_project}_" | xargs -r docker volume rm 2>/dev/null || true
-
-      # Remove images created for this agent
-      docker images --format "{{.Repository}}" | grep -E "^${docker_project}[_-]" | xargs -r docker rmi 2>/dev/null || true
-
-      gum style --foreground 82 "  ✅ Docker environment cleaned"
-    fi
-  fi
+  printf '{"worktree_path":"%s","cwd":"%s"}' "$worktree_path" "$MAIN_WORKTREE" | "$HOOK"
+  [ ! -d "$worktree_path" ]
 }
 
 # Check if we're in a git repository
@@ -87,8 +45,7 @@ if ! command -v gum &>/dev/null; then
   exit 1
 fi
 
-# Get current branch and worktree info
-CURRENT_BRANCH=$(git branch --show-current)
+# Get main branch and worktree info
 MAIN_BRANCH=$(get_main_branch)
 MAIN_WORKTREE=$(git worktree list | head -n1 | awk '{print $1}')
 
@@ -96,7 +53,6 @@ MAIN_WORKTREE=$(git worktree list | head -n1 | awk '{print $1}')
 get_worktree_info() {
   local worktree_path="$1"
   local branch_name=$(git worktree list | grep "$worktree_path" | sed -n 's/.*\[\(.*\)\].*/\1/p')
-  local commit_hash=$(git worktree list | grep "$worktree_path" | awk '{print $2}')
   echo "$branch_name"
 }
 
@@ -142,33 +98,18 @@ if [ $# -gt 0 ]; then
     "$(gum style --foreground 117 "Branch: $branch_name")"
 
   # Confirm removal
-  if gum confirm "Remove this agent (worktree + Docker + branch)?"; then
+  if gum confirm "Remove this agent (worktree + Docker)?"; then
     # Check if we're currently in the worktree we're trying to remove
     if [ "$PWD" = "$worktree_path" ] || [[ "$PWD" == "$worktree_path"/* ]]; then
       gum style --foreground 214 "⚠️  Switching to main worktree..."
       cd "$MAIN_WORKTREE"
     fi
 
-    # Clean Docker environment first (while we still have the path)
-    clean_docker_env "$worktree_path" "$branch_name"
-
-    # Remove the worktree
-    gum spin --spinner dot --title "Removing worktree..." -- git worktree remove "$worktree_path" --force
-    gum style --foreground 82 "✅ Worktree removed"
-
-    # Handle branch deletion
-    if is_branch_merged "$branch_name"; then
-      if gum confirm "Branch is merged. Delete it?"; then
-        git branch -d "$branch_name"
-        gum style --foreground 82 "✅ Branch deleted"
-      fi
+    if remove_agent "$worktree_path"; then
+      gum style --foreground 82 "✅ Worktree and Docker removed"
     else
-      if gum confirm --default=false "Branch is NOT merged. Force delete?"; then
-        git branch -D "$branch_name"
-        gum style --foreground 82 "✅ Branch force deleted"
-      else
-        gum style --foreground 117 "Branch kept: $branch_name"
-      fi
+      gum style --foreground 196 "❌ Removal failed — see the log above"
+      exit 1
     fi
   else
     gum style --foreground 214 "Cancelled"
@@ -192,10 +133,8 @@ else
     # Check if merged
     if is_branch_merged "$branch_name"; then
       merge_status="✓ merged"
-      merge_color="82"
     else
       merge_status="✗ unmerged"
-      merge_color="214"
     fi
 
     # Format: worktree-name [branch-name] (merge status)
@@ -212,7 +151,7 @@ else
   gum style --border double --border-foreground 212 --padding "1 2" --margin "1 0" \
     "$(gum style --foreground 212 --bold 'Agent Cleanup')" \
     "" \
-    "$(gum style --foreground 245 'Select agents to remove (worktree + Docker + branch)')" \
+    "$(gum style --foreground 245 'Select agents to remove (worktree + Docker)')" \
     "" \
     "$(gum style --foreground 245 'Use space to select, enter to confirm')"
 
@@ -240,9 +179,6 @@ else
       fi
     done
 
-    # Get branch name
-    branch_name=$(get_worktree_info "$worktree_path")
-
     # Safety check - never remove main worktree
     if [ "$worktree_path" = "$MAIN_WORKTREE" ]; then
       gum style --foreground 196 "⚠️  Skipping main worktree"
@@ -257,41 +193,14 @@ else
       cd "$MAIN_WORKTREE"
     fi
 
-    # Clean Docker environment first (while we still have the path)
-    clean_docker_env "$worktree_path" "$branch_name"
-
-    # Remove the worktree
-    gum spin --spinner dot --title "  Removing worktree..." -- git worktree remove "$worktree_path" --force
-    gum style --foreground 82 "  ✅ Worktree removed"
-
-    # Handle branch deletion
-    if is_branch_merged "$branch_name"; then
-      git branch -d "$branch_name" 2>/dev/null &&
-        gum style --foreground 82 "  ✅ Branch deleted (was merged)" ||
-        gum style --foreground 214 "  ⚠️  Branch already deleted"
+    if remove_agent "$worktree_path"; then
+      gum style --foreground 82 "  ✅ Worktree and Docker removed"
     else
-      # For unmerged branches in batch mode, ask once at the end
-      unmerged_branches+=("$branch_name")
+      gum style --foreground 196 "  ❌ Removal failed — see the log above"
     fi
 
   done <<<"$selected_indices"
 
-  # Handle unmerged branches if any
-  if [ ${#unmerged_branches[@]} -gt 0 ]; then
-    gum style --margin "1 0" --foreground 214 "Unmerged branches remain:"
-    for branch in "${unmerged_branches[@]}"; do
-      echo "  • $branch"
-    done
-
-    if gum confirm --default=false "Force delete ALL unmerged branches?"; then
-      for branch in "${unmerged_branches[@]}"; do
-        git branch -D "$branch"
-        gum style --foreground 82 "  ✅ Force deleted: $branch"
-      done
-    else
-      gum style --foreground 117 "Unmerged branches kept"
-    fi
-  fi
 fi
 
 # Clean up any prunable worktrees

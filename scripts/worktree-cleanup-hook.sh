@@ -112,6 +112,10 @@ if [ -f "${WORKTREE_PATH}/.env" ] && command -v psql &>/dev/null; then
   PG_PROJECT=$(grep "^COMPOSE_PROJECT_NAME=" "$PG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2)
   PG_DEV_DB=$(grep "^POSTGRES_DB=" "$PG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2)
   PG_TEST_DB=$(grep "^POSTGRES_TEST_DB=" "$PG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2)
+  # Not always 5432. A repo whose schema needs a newer server than the default
+  # cluster pins POSTGRES_PORT in .env, and the databases to drop live there.
+  PG_PORT=$(grep "^POSTGRES_PORT=" "$PG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2)
+  PG_PORT=${PG_PORT:-5432}
 
   drop_host_db() {
     local db="$1"
@@ -123,13 +127,13 @@ if [ -f "${WORKTREE_PATH}/.env" ] && command -v psql &>/dev/null; then
       *[!a-z0-9_]*) log "Skipping host DB (unexpected characters): $db"; return ;;
     esac
     log "Dropping host database: $db"
-    psql -h localhost -p 5432 -d postgres -X -q \
+    psql -h localhost -p "$PG_PORT" -d postgres -X -q \
       -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE)" 2>&1 | while read -r line; do log "$line"; done
   }
 
   # PG_PROJECT must be non-empty: with an empty prefix the scope guard above
   # would match every database name.
-  if [ -n "$PG_PROJECT" ] && psql -h localhost -p 5432 -d postgres -X -q -c "SELECT 1" &>/dev/null; then
+  if [ -n "$PG_PROJECT" ] && psql -h localhost -p "$PG_PORT" -d postgres -X -q -c "SELECT 1" &>/dev/null; then
     if [ -n "$PG_DEV_DB" ]; then
       for db in "$PG_DEV_DB" "${PG_DEV_DB}_cache" "${PG_DEV_DB}_queue" "${PG_DEV_DB}_cable"; do
         drop_host_db "$db"
@@ -137,6 +141,14 @@ if [ -f "${WORKTREE_PATH}/.env" ] && command -v psql &>/dev/null; then
     fi
     if [ -n "$PG_TEST_DB" ]; then
       drop_host_db "$PG_TEST_DB"
+      # Parallel testing gives each worker a database of its own, named after
+      # the test one with _0.._N appended, and there are as many as the machine
+      # has cores. Ask which exist rather than guess how many; drop_host_db
+      # still applies the COMPOSE_PROJECT_NAME guard to every name it is given.
+      while read -r worker_db; do
+        [ -n "$worker_db" ] && drop_host_db "$worker_db"
+      done < <(psql -h localhost -p "$PG_PORT" -d postgres -X -tAc \
+        "SELECT datname FROM pg_database WHERE datname LIKE '${PG_TEST_DB}\_%'" 2>/dev/null)
     fi
   fi
 fi

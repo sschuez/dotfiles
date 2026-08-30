@@ -206,13 +206,6 @@ fi
 # Clean up any prunable worktrees
 git worktree prune
 
-# Also clean up any dangling Docker images/volumes
-if command -v docker &>/dev/null; then
-  gum style --foreground 117 "Cleaning up Docker system..."
-  docker image prune -f 2>/dev/null || true
-  docker volume prune -f 2>/dev/null || true
-fi
-
 # Ensure we're in a valid directory at the end
 if [ ! -d "$PWD" ]; then
   cd "$MAIN_WORKTREE"

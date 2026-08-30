@@ -82,8 +82,10 @@ if $HAS_DOCKER && command -v docker &>/dev/null; then
     fi
   fi
 
-  # Strategy 2: docker compose down with explicit project name
-  if docker compose ls --filter "name=${DOCKER_PROJECT}" --format json 2>/dev/null | grep -q "$DOCKER_PROJECT"; then
+  # Strategy 2: docker compose down with explicit project name.
+  # -a is load-bearing: without it compose ls lists only *running* projects, so
+  # a worktree whose containers had already exited slipped through untouched.
+  if docker compose ls -a --filter "name=${DOCKER_PROJECT}" --format json 2>/dev/null | grep -q "$DOCKER_PROJECT"; then
     log "Running docker compose down -v -p $DOCKER_PROJECT"
     docker compose -p "$DOCKER_PROJECT" down -v --remove-orphans 2>&1 | while read -r line; do log "$line"; done
   fi

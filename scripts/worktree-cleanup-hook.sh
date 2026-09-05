@@ -162,7 +162,21 @@ BRANCH_NAME="worktree-${WT_NAME}"
 
 if [ -d "$WORKTREE_PATH" ] && [ -n "$CWD" ]; then
   log "Removing git worktree: $WORKTREE_PATH"
+  REGISTERED=false
+  git -C "$CWD" worktree list --porcelain | grep -qxF "worktree $WORKTREE_PATH" && REGISTERED=true
   git -C "$CWD" worktree remove "$WORKTREE_PATH" --force 2>&1 | while read -r line; do log "$line"; done
+
+  # git deletes the tree entry by entry while it reads each directory and has
+  # stopped early once on macOS ("Directory not empty"), leaving ignored files
+  # (storage/, tmp/, log/) behind while it still dropped its worktree metadata.
+  # rm reads a directory fully before deleting, so it finishes the job.
+  # Only when git itself listed the path before and dropped it now: a path git
+  # refused to remove (locked, not a worktree) stays untouched.
+  if $REGISTERED && [ -d "$WORKTREE_PATH" ] &&
+     ! git -C "$CWD" worktree list --porcelain | grep -qxF "worktree $WORKTREE_PATH"; then
+    log "Removing files git left behind: $WORKTREE_PATH"
+    rm -rf "$WORKTREE_PATH"
+  fi
 
   # Delete the worktree branch only if fully merged — unmerged work survives
   # for manual review (git branch -d refuses to delete unmerged branches)

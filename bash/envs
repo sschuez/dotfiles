@@ -39,3 +39,9 @@ export BAT_THEME=ansi
 # Claude Code: append-only rendering to avoid TUI corruption on Ghostty
 # (in-place repaints drift out of sync with Ghostty's synchronized output).
 export CLAUDE_CODE_NO_FLICKER=1
+
+# OpenStack CLI: default cloud from ~/.config/openstack/clouds.yaml (Infomaniak)
+export OS_CLOUD=chalet-production
+
+# SSH keys live in 1Password; its agent serves ssh, git and Kamal (net-ssh).
+export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"

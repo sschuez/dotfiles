@@ -68,16 +68,57 @@ alias tk='tmux kill-session -a'          # kill all sessions except current
 alias tls='tmux list-sessions 2>/dev/null || echo "No tmux sessions"'
 
 # Docker
+# dcr is a function now. Bash expands an alias before it parses a function
+# definition, so re-sourcing this file while the old alias is still loaded
+# would turn `dcr() {` into `docker compose run --rm app() {` and fail to
+# parse. Clearing it first makes the file safe to source twice.
+unalias dcr 2>/dev/null || true
+
 alias dcu="rm -f tmp/pids/server.pid && docker compose up -d && docker compose logs -f"
 alias dcb="docker compose build"
 alias dcbb="docker compose build && docker compose run --rm app bundle install"
 alias dcbc="docker compose build --no-cache"
-alias dcd="docker compose down --remove-orphans"
-alias dcr="docker compose run --rm app"
+# --profile '*' on the teardowns only. Compose ignores profile services
+# unless their profile is on, so a bare `down` leaves chrome-server running
+# and then cannot remove the network it holds ("Resource is still in use").
+# `up` stays profile-less on purpose: that is what keeps the browser out of
+# a plain `dcu`.
+alias dcd="docker compose --profile '*' down --remove-orphans"
+# The selenium sidecar sits behind a compose profile and out of app's
+# depends_on, which cannot tell `bin/test` from `bin/rails console`. So the
+# conditional lives here: start the grid, and wait for it to report ready, only
+# for a command that actually drives one.
+dcr() {
+  local wants_chrome=""
+  case " $* " in
+    *test/system*|*test:system*|" bin/test "|*bin/ci*)
+      # --profile test on the lookup, because `config --services` hides a
+      # profiled service — which is exactly what chrome-server is, so without
+      # this the check never matches and the browser never starts.
+      docker compose --profile test config --services 2>/dev/null |
+        grep -qx chrome-server && wants_chrome=1
+      ;;
+  esac
+
+  [ -n "$wants_chrome" ] || { docker compose run --rm app "$@"; return; }
+
+  # Up for the run, down after it: 4.8s to start and reach healthy, against
+  # 185MB and 61 processes left sitting idle — worth it when several worktrees
+  # share one VM. A Ctrl-C skips the stop; `dcs` or `dcd` still clears it.
+  docker compose up -d --wait chrome-server
+  docker compose run --rm app "$@"
+  local status=$?
+  docker compose stop chrome-server >/dev/null 2>&1
+  return $status
+}
 alias dcx="docker compose restart"
-alias dcs="docker compose stop"
+alias dcs="docker compose --profile '*' stop"
 alias dce="docker compose exec app"
-alias dclean='docker system prune -f --volumes'
+# No --volumes. It removes every volume not attached to a *running* container,
+# and with the stacks down that is every development database on the machine —
+# 10 of them here, across chalet, chalet-app, submissio, gym and payday. Drop a
+# specific one by name when you mean to: docker volume rm <project>_postgres_data
+alias dclean='docker system prune -f'
 
 # Kamal
 alias kl="kamal app logs -f"

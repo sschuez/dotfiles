@@ -1,6 +1,7 @@
 1password-cli
 aerospace
 alacritty
+basecamp-cli
 exo
 ghostty
 memory-cleaner

@@ -1,9 +1,10 @@
 #!/bin/bash
 # Claude Code WorktreeRemove hook
 #
-# Reads {"worktree_path": "...", "cwd": "...", ...} JSON from stdin, tears
-# down the worktree's Docker resources (containers, volumes, images), then
-# removes the git worktree. Always exits 0 — failures never block Claude Code.
+# Reads {"worktree_path": "...", "cwd": "...", ...} JSON from stdin, stops the
+# host servers running from the worktree, tears down its Docker resources
+# (containers, volumes, images) and its host Postgres databases, then removes
+# the git worktree. Always exits 0 — failures never block Claude Code.
 #
 # Docker project resolution, in order:
 #   1. COMPOSE_PROJECT_NAME from the worktree's .env — this is what compose
@@ -32,6 +33,56 @@ if [ -z "$WORKTREE_PATH" ]; then
 fi
 
 log() { echo "[worktree-cleanup] $*" >&2; }
+
+# --- Host servers (processes listening from inside the worktree) ---
+#
+# A server started on the host from the worktree — rails server, bin/dev, a
+# node dev server, a test run's chromedriver, a tunnel — is no container, so
+# the Docker step below never sees it, and it keeps serving from a deleted
+# directory. A server is a process listening on a TCP port; it belongs to
+# this worktree when its working directory is inside it. Listeners only, not
+# every process with that cwd: the Claude Code session running this hook, and
+# the user's shells and editors, may stand in the worktree too — and the
+# hook's own ancestry is skipped regardless.
+
+WT_REAL=$(cd "$WORKTREE_PATH" 2>/dev/null && pwd -P)
+
+if [ -n "$WT_REAL" ] && command -v lsof &>/dev/null; then
+  ANCESTORS=" $$ "
+  ancestor=$PPID
+  while [ -n "$ancestor" ] && [ "$ancestor" -gt 1 ] 2>/dev/null; do
+    ANCESTORS="${ANCESTORS}${ancestor} "
+    ancestor=$(ps -o ppid= -p "$ancestor" 2>/dev/null | tr -d ' ')
+  done
+
+  # -a: lsof ORs its selectors otherwise, and -u alone lists every open file.
+  SERVER_PIDS=""
+  for pid in $(lsof -a -nP -iTCP -sTCP:LISTEN -u "$(id -u)" -t 2>/dev/null | sort -u); do
+    case "$ANCESTORS" in *" $pid "*) continue ;; esac
+    cwd=$(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')
+    case "$cwd" in
+      "$WT_REAL"|"$WT_REAL"/*)
+        log "Stopping server: $pid $(ps -o command= -p "$pid" 2>/dev/null | cut -c1-80)"
+        kill -TERM "$pid" 2>/dev/null
+        SERVER_PIDS="$SERVER_PIDS $pid"
+        ;;
+    esac
+  done
+
+  # Puma and friends finish their requests on TERM; ten seconds, then KILL.
+  if [ -n "$SERVER_PIDS" ]; then
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+      alive=""
+      for pid in $SERVER_PIDS; do kill -0 "$pid" 2>/dev/null && alive="$alive $pid"; done
+      [ -z "$alive" ] && break
+      sleep 1
+    done
+    for pid in $alive; do
+      log "Killing server that ignored TERM: $pid"
+      kill -KILL "$pid" 2>/dev/null
+    done
+  fi
+fi
 
 # --- Docker cleanup (only if project uses Docker) ---
 

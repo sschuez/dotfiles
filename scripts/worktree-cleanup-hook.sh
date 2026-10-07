@@ -119,6 +119,18 @@ if [ -f "${WORKTREE_PATH}/.env" ] && command -v psql &>/dev/null; then
   PG_PORT=$(grep "^POSTGRES_PORT=" "$PG_ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2)
   PG_PORT=${PG_PORT:-5432}
 
+  # A repo whose config/database.yml derives its names from COMPOSE_PROJECT_NAME
+  # (chalet-app) writes none of them into .env, so derive the same ones here.
+  # Only for such a repo: a guessed name must never reach a database that
+  # nobody tied to this worktree. <project>_schema_check is the scratch
+  # database chalet-app's bin/ci migrates from zero.
+  PG_CHECK_DB=""
+  if grep -q COMPOSE_PROJECT_NAME "${WORKTREE_PATH}/config/database.yml" 2>/dev/null; then
+    PG_DEV_DB=${PG_DEV_DB:-${PG_PROJECT}_development}
+    PG_TEST_DB=${PG_TEST_DB:-${PG_PROJECT}_test}
+    PG_CHECK_DB="${PG_PROJECT}_schema_check"
+  fi
+
   drop_host_db() {
     local db="$1"
     case "$db" in
@@ -136,21 +148,24 @@ if [ -f "${WORKTREE_PATH}/.env" ] && command -v psql &>/dev/null; then
   # PG_PROJECT must be non-empty: with an empty prefix the scope guard above
   # would match every database name.
   if [ -n "$PG_PROJECT" ] && psql -h localhost -p "$PG_PORT" -d postgres -X -q -c "SELECT 1" &>/dev/null; then
-    if [ -n "$PG_DEV_DB" ]; then
-      for db in "$PG_DEV_DB" "${PG_DEV_DB}_cache" "${PG_DEV_DB}_queue" "${PG_DEV_DB}_cable"; do
+    for base in "$PG_DEV_DB" "$PG_CHECK_DB"; do
+      [ -n "$base" ] || continue
+      for db in "$base" "${base}_cache" "${base}_queue" "${base}_cable"; do
         drop_host_db "$db"
       done
-    fi
+    done
     if [ -n "$PG_TEST_DB" ]; then
       drop_host_db "$PG_TEST_DB"
       # Parallel testing gives each worker a database of its own, named after
       # the test one with _0.._N appended, and there are as many as the machine
       # has cores. Ask which exist rather than guess how many; drop_host_db
       # still applies the COMPOSE_PROJECT_NAME guard to every name it is given.
+      # Digits only: a plain prefix match also caught a sibling worktree's
+      # databases — removing "forms" took chalet_app_forms_test_x_development.
       while read -r worker_db; do
         [ -n "$worker_db" ] && drop_host_db "$worker_db"
       done < <(psql -h localhost -p "$PG_PORT" -d postgres -X -tAc \
-        "SELECT datname FROM pg_database WHERE datname LIKE '${PG_TEST_DB}\_%'" 2>/dev/null)
+        "SELECT datname FROM pg_database WHERE datname ~ '^${PG_TEST_DB}_[0-9]+\$'" 2>/dev/null)
     fi
   fi
 fi

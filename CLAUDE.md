@@ -46,6 +46,7 @@ Unified theming across applications with per-theme folder structure (inspired by
 - Automatically switches system dark/light mode based on `light.mode` file presence
 - Updates tmux, Alacritty, Ghostty, Neovim, Claude Code, and wallpaper simultaneously
 - **scripts/apply_claude_theme.sh**: Generates the Claude Code theme `~/.claude/themes/dotfiles.json` from the theme's `ghostty.conf` palette; running Claude Code sessions reload it live. Select it once with `"theme": "custom:dotfiles"` in `~/.claude/settings.json`
+- **scripts/set_wallpaper_everywhere.py**: Sets the wallpaper on every display and Space stored in macOS's wallpaper store (`~/Library/Application Support/com.apple.wallpaper/Store/Index.plist`), so monitors connected later show it too, then restarts `WallpaperAgent`. Falls back to `osascript` (connected displays only) if the store format changes
 
 ### Application Configurations
 - **alacritty/**: Terminal emulator config with modular theme/font includes

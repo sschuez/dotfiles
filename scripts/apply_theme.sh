@@ -84,11 +84,13 @@ if [ -n "$cursor_color" ]; then
   fi
 fi
 
-# Apply wallpaper
+# Apply wallpaper to every display macOS has stored, connected or not;
+# osascript (the fallback) reaches only the connected ones
 for ext in jpg png; do
   wallpaper="$THEME_PATH/wallpaper.$ext"
   if [ -f "$wallpaper" ]; then
-    osascript -e "tell application \"System Events\" to set picture of every desktop to \"$wallpaper\"" 2>/dev/null
+    "$HOME/code/dotfiles/scripts/set_wallpaper_everywhere.py" "$wallpaper" ||
+      osascript -e "tell application \"System Events\" to set picture of every desktop to \"$wallpaper\"" 2>/dev/null
     echo "  wallpaper"
     break
   fi

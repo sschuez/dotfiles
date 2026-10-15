@@ -20,6 +20,7 @@ certifi
 cffi
 cfitsio
 cgif
+chalet
 cjson
 cmake
 cryptography
@@ -48,6 +49,7 @@ gcc
 gdk-pixbuf
 geckodriver
 gettext
+ggml
 gh
 ghostscript
 giflib
@@ -175,6 +177,7 @@ libxrender
 libxtst
 libyaml
 little-cms2
+llama.cpp
 llhttp
 llvm
 lpeg
@@ -221,6 +224,7 @@ openslide
 openssl@1.1
 openssl@3
 openssl@3.5
+openssl@4
 openstackclient
 openvino
 opus
@@ -290,6 +294,7 @@ vulkan-headers
 vulkan-loader
 watch
 webp
+whisper.cpp
 x264
 x265
 xorgproto

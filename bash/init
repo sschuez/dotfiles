@@ -7,9 +7,10 @@
 # Excludes: already in tmux, SSH sessions, non-TTY, VSCode terminal
 if [[ -z "$TMUX" && -t 0 && -z "$SSH_CONNECTION" && "$TERM_PROGRAM" != "vscode" ]]; then
   # If main session exists and has a client attached, create new session
-  # Otherwise attach to main (or create it)
+  # that is destroyed when its window closes (so they don't pile up).
+  # Otherwise attach to main (or create it); main survives closing the window.
   if tmux has-session -t main 2>/dev/null && [[ $(tmux list-clients -t main 2>/dev/null | wc -l) -gt 0 ]]; then
-    exec tmux new-session
+    exec tmux new-session \; set destroy-unattached on
   else
     exec tmux new-session -A -s main
   fi

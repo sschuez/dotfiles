@@ -36,6 +36,9 @@ fi
 # Bat theme (for better file previews)
 export BAT_THEME=ansi
 
+# Claude Code: classic renderer, so the conversation stays in the tmux scrollback for copy mode.
+# Unset is not enough: Claude Code can still pick fullscreen (alternate screen, no scrollback) itself.
+export CLAUDE_CODE_NO_FLICKER=0
 # Claude Code: full 24-bit colour inside tmux (tmux passes RGB through, see tmux/.tmux.conf),
 # so the generated theme (scripts/apply_claude_theme.sh) shows exact colours.
 export CLAUDE_CODE_TMUX_TRUECOLOR=1

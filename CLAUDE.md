@@ -44,7 +44,8 @@ Unified theming across applications with per-theme folder structure (inspired by
   ```
 - **scripts/apply_theme.sh**: Master theme switcher using gum for selection
 - Automatically switches system dark/light mode based on `light.mode` file presence
-- Updates tmux, Alacritty, Ghostty, Neovim, and wallpaper simultaneously
+- Updates tmux, Alacritty, Ghostty, Neovim, Claude Code, and wallpaper simultaneously
+- **scripts/apply_claude_theme.sh**: Generates the Claude Code theme `~/.claude/themes/dotfiles.json` from the theme's `ghostty.conf` palette; running Claude Code sessions reload it live. Select it once with `"theme": "custom:dotfiles"` in `~/.claude/settings.json`
 
 ### Application Configurations
 - **alacritty/**: Terminal emulator config with modular theme/font includes

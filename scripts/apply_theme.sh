@@ -65,6 +65,7 @@ apply_config "$THEME_PATH/tmux.conf" "$HOME/code/dotfiles/tmux/theme.conf" "tmux
 apply_config "$THEME_PATH/alacritty.toml" "$HOME/.config/alacritty/theme.toml" "alacritty"
 apply_config "$THEME_PATH/ghostty.conf" "$HOME/.config/ghostty/theme.conf" "ghostty"
 apply_config "$THEME_PATH/neovim.lua" "$HOME/.config/nvim/lua/plugins/theme.lua" "neovim"
+"$HOME/code/dotfiles/scripts/apply_claude_theme.sh" "$THEME_PATH"
 
 # Reload tmux if running
 tmux info &>/dev/null && tmux source-file "$HOME/code/dotfiles/tmux/.tmux.conf" 2>/dev/null

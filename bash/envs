@@ -39,6 +39,9 @@ export BAT_THEME=ansi
 # Claude Code: append-only rendering to avoid TUI corruption on Ghostty
 # (in-place repaints drift out of sync with Ghostty's synchronized output).
 export CLAUDE_CODE_NO_FLICKER=1
+# Claude Code: full 24-bit colour inside tmux (tmux passes RGB through, see tmux/.tmux.conf),
+# so the generated theme (scripts/apply_claude_theme.sh) shows exact colours.
+export CLAUDE_CODE_TMUX_TRUECOLOR=1
 
 # OpenStack CLI: default cloud from ~/.config/openstack/clouds.yaml (Infomaniak)
 export OS_CLOUD=chalet-production

@@ -1,6 +1,6 @@
 return {
 	{
-		"gthelding/monokai-pro.nvim",
+		"loctvl842/monokai-pro.nvim",
 		config = function()
 			vim.o.background = "dark"
 			require("monokai-pro").setup({
@@ -21,13 +21,13 @@ return {
 					}
 				end,
 			})
-			vim.cmd([[colorscheme monokai-pro]])
+			vim.cmd([[colorscheme monokai-pro-ristretto]])
 		end,
 	},
 	{
 		"LazyVim/LazyVim",
 		opts = {
-			colorscheme = "monokai-pro",
+			colorscheme = "monokai-pro-ristretto",
 		},
 	},
 }

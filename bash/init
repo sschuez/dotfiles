@@ -16,12 +16,6 @@ if [[ -z "$TMUX" && -t 0 && -z "$SSH_CONNECTION" && "$TERM_PROGRAM" != "vscode" 
   fi
 fi
 
-# Fast path for tmux subshells - skip redundant inits
-if [[ -n "$TMUX_INIT_DONE" ]]; then
-  return
-fi
-export TMUX_INIT_DONE=1
-
 # Mise (replaces nvm, pyenv, rbenv with a single tool)
 # Only load if we're likely to need it (development directories)
 if command -v mise &> /dev/null; then

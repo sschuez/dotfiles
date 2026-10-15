@@ -8,6 +8,7 @@ return {
 				override = function()
 					return {
 						NonText = { fg = "#948a8b" },
+						FloatBorder = { fg = "#948a8b" }, -- default is near-invisible on the transparent background
 						MiniIconsGrey = { fg = "#948a8b" },
 						MiniIconsRed = { fg = "#fd6883" },
 						MiniIconsBlue = { fg = "#85dacc" },

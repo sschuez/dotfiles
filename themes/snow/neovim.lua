@@ -4,6 +4,11 @@ return {
 		name = "snow",
 		config = function()
 			vim.o.background = "light"
+			require("snow").setup({
+				highlights = {
+					FloatBorder = { fg = "#808080" }, -- default is near-invisible on the transparent background
+				},
+			})
 			vim.cmd.colorscheme("snow")
 
 			-- Set custom fzf colors for Snow (light theme)

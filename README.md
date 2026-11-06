@@ -80,6 +80,19 @@ dotfiles/
 - `fontsize` or `fs` - Change font size
 - `fs+` / `fs-` - Increase/decrease font size
 
+Codex CLI uses `codex/dotfiles.tmTheme`, which the install script links into
+`~/.codex/themes`. Run `/theme` in Codex and select `dotfiles` once. The theme
+names terminal palette colors instead of RGB values, so a theme switch
+recolors running Codex sessions, text already on screen included. The `codex`
+alias sets `FORCE_COLOR=1`: in 16-color mode Codex draws its own UI with
+palette colors too, so light/dark switches also apply live. The cost is the
+shaded composer and prompt fills, the tinted diff lines and a reverse-video
+selection. To keep `FORCE_COLOR` out of the commands Codex runs, add this to
+`~/.codex/config.toml`:
+
+    [shell_environment_policy.filters]
+    FORCE_COLOR = "exclude"
+
 ### Git Shortcuts
 
 - `g` - git

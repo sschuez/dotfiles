@@ -84,6 +84,11 @@ echo "Setting up AeroSpace configuration..."
 mkdir -p ~/.config/aerospace
 backup_and_link "$DOTFILES_DIR/aerospace/aerospace.toml" ~/.config/aerospace/aerospace.toml
 
+# Codex CLI theme
+echo "Setting up Codex CLI theme..."
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/themes"
+backup_and_link "$DOTFILES_DIR/codex/dotfiles.tmTheme" "${CODEX_HOME:-$HOME/.codex}/themes/dotfiles.tmTheme"
+
 # Change default shell to modern bash
 current_shell=$(dscl . -read /Users/$USER UserShell | cut -d' ' -f2)
 if [ "$current_shell" != "/opt/homebrew/bin/bash" ]; then

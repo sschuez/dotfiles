@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Codex CLI syntax theme for every dotfiles theme. Select it once with /theme.
+
+  Colors use bat's ANSI encoding, which Codex 0.167.0 reads: #NN000000 is
+  terminal palette color NN, #00000001 is the terminal default. Codex sends
+  palette references instead of RGB, so a theme switch recolors running
+  sessions, text already on screen included. Comments are italic in the
+  default color because palette 8 nearly vanishes on several light themes.
+-->
+<plist version="1.0">
+<dict>
+	<key>name</key>
+	<string>Dotfiles</string>
+	<key>settings</key>
+	<array>
+		<dict>
+			<key>settings</key>
+			<dict>
+				<key>background</key>
+				<string>#00000001</string>
+				<key>foreground</key>
+				<string>#00000001</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>scope</key>
+			<string>keyword, storage</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#05000000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>scope</key>
+			<string>string, markup.inserted</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#02000000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>scope</key>
+			<string>constant, entity.other.attribute-name</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#03000000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>scope</key>
+			<string>entity.name.function, support.function</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#04000000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>scope</key>
+			<string>entity.name.type, entity.name.class, support.type, support.class</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#06000000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>scope</key>
+			<string>variable.language, constant.character.escape</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#01000000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>scope</key>
+			<string>markup.deleted, invalid</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#01000000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>scope</key>
+			<string>markup.heading, markup.changed, codex.accent</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#04000000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>scope</key>
+			<string>markup.underline.link</string>
+			<key>settings</key>
+			<dict>
+				<key>foreground</key>
+				<string>#06000000</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>scope</key>
+			<string>comment</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string>italic</string>
+				<key>foreground</key>
+				<string>#00000001</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>scope</key>
+			<string>markup.bold</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string>bold</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>scope</key>
+			<string>markup.italic</string>
+			<key>settings</key>
+			<dict>
+				<key>fontStyle</key>
+				<string>italic</string>
+			</dict>
+		</dict>
+	</array>
+</dict>
+</plist>

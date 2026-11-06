@@ -46,6 +46,7 @@ Unified theming across applications with per-theme folder structure (inspired by
 - Automatically switches system dark/light mode based on `light.mode` file presence
 - Updates tmux, Alacritty, Ghostty, Neovim, Claude Code, and wallpaper simultaneously
 - **scripts/apply_claude_theme.sh**: Generates the Claude Code theme `~/.claude/themes/dotfiles.json` from the theme's `ghostty.conf` palette; running Claude Code sessions reload it live. Select it once with `"theme": "custom:dotfiles"` in `~/.claude/settings.json`
+- **codex/dotfiles.tmTheme**: Static Codex CLI theme, linked into `~/.codex/themes` by the install script; select `dotfiles` once via `/theme`. It names terminal palette colors (bat's ANSI encoding, read by Codex 0.167.0), so the switcher needs no Codex step and running sessions recolor live. The `codex` alias in `bash/aliases` sets `FORCE_COLOR=1`, so Codex draws its UI/diffs with palette colors only and light/dark switches recolor live too; `[shell_environment_policy.filters] FORCE_COLOR = "exclude"` in `~/.codex/config.toml` keeps it out of child commands
 - **scripts/set_wallpaper_everywhere.py**: Sets the wallpaper on every display and Space stored in macOS's wallpaper store (`~/Library/Application Support/com.apple.wallpaper/Store/Index.plist`), so monitors connected later show it too, then restarts `WallpaperAgent`. Falls back to `osascript` (connected displays only) if the store format changes
 
 ### Application Configurations

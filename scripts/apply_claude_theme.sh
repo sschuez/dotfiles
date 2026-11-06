@@ -32,6 +32,9 @@ red=$(palette 1) green=$(palette 2) yellow=$(palette 3) blue=$(palette 4)
 magenta=$(palette 5) cyan=$(palette 6) muted=$(palette 8)
 bright_yellow=$(palette 11) bright_cyan=$(palette 14)
 accent=$blue
+# A monochrome palette (snow) has a cyan equal to the text, so a typed /command
+# or skill name would not stand out in the prompt; use the accent instead.
+[ "$cyan" = "$fg" ] && cyan=$accent
 
 base=dark
 [ -f "$theme_path/light.mode" ] && base=light

@@ -12,7 +12,8 @@
 #
 # A worktree lives next to the repo, in <repo>-worktrees/<name>, on branch
 # worktree-<name>, and gets a slot number (1, 2, ...) unique in the repo.
-# Its .env (copied from the main checkout, if there is one) gets:
+# Its .env (copied from the main checkout, if there is one; only written in
+# repos that gitignore .env) gets:
 #
 #   COMPOSE_PROJECT_NAME  <repo>_<name>: own containers, volumes and images
 #   <X>_PORT              default + slot, for every ${<X>_PORT:-default} in
@@ -228,7 +229,10 @@ cmd_new() {
     slot=$(next_slot "$main")
     echo "$slot" >"$(admin_dir "$wt")/wt-slot"
     copy_includes "$main" "$wt"
-    write_env "$main" "$wt" "$name" "$slot"
+    # Only where the repo keeps a .env: never leave an untracked one behind.
+    if [ -f "$wt/.env" ] || git -C "$wt" check-ignore -q .env; then
+      write_env "$main" "$wt" "$name" "$slot"
+    fi
     if command -v mise >/dev/null; then
       for f in mise.toml .mise.toml; do [ -f "$wt/$f" ] && mise trust -q "$wt/$f" >&2 || true; done
     fi

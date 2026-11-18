@@ -5,7 +5,9 @@
 # and are cleaned up completely when removed. No per-repo setup needed.
 #
 #   wt new <name> [base]   create a worktree (base: current branch)
-#   wt rm <name|path>      tear it down and remove it
+#   wt rm [--force] <name|path>
+#                          tear it down and remove it (--force: even with
+#                          uncommitted changes)
 #   wt ls                  list this repo's worktrees
 #   wt hook create|remove  Claude Code WorktreeCreate / WorktreeRemove hooks
 #                          (JSON on stdin), so `claude --worktree <name>` uses this
@@ -242,13 +244,19 @@ cmd_new() {
 }
 
 cmd_rm() {
-  local target=${1:-} main wt name branch project
-  [ -n "$target" ] || die "usage: wt rm <name|path>"
+  local force="" target main wt name branch project
+  if [ "${1:-}" = "--force" ]; then force=1; shift; fi
+  target=${1:-}
+  [ -n "$target" ] || die "usage: wt rm [--force] <name|path>"
   main=$(main_dir "${WT_FROM:-.}")
   case "$target" in /*) wt=$target ;; *) wt="$(worktrees_root "$main")/$target" ;; esac
   [ -d "$wt" ] || die "no worktree at $wt"
   [ "$(cd "$wt" && pwd -P)" != "$(cd "$main" && pwd -P)" ] || die "refusing to remove the main checkout"
   name=$(basename "$wt")
+  # Commits survive on the branch; uncommitted changes would be lost for good.
+  if [ -z "$force" ] && [ -n "$(git -C "$wt" status --porcelain 2>/dev/null)" ]; then
+    die "$name has uncommitted changes; commit them, or run: wt rm --force $name"
+  fi
   branch=$(git -C "$wt" branch --show-current 2>/dev/null || true)
   project=$(env_value COMPOSE_PROJECT_NAME "$wt/.env")
 
@@ -294,7 +302,8 @@ cmd_hook() {
     # Never fail removal from here: a failed hook leaves the worktree stuck.
     path=$(jq -r '.worktree_path' <<<"$input")
     WT_FROM=$(jq -r '.cwd // empty' <<<"$input")
-    WT_FROM=${WT_FROM:-$path} cmd_rm "$path" || true ;;
+    # --force: Claude Code has already asked the user about unsaved work.
+    WT_FROM=${WT_FROM:-$path} cmd_rm --force "$path" || true ;;
   *) die "usage: wt hook create|remove" ;;
   esac
 }
@@ -304,5 +313,5 @@ new) shift; cmd_new "$@" ;;
 rm) shift; cmd_rm "$@" ;;
 ls) cmd_ls ;;
 hook) shift; cmd_hook "$@" ;;
-*) sed -n '2,31p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+*) sed -n '4,35p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac

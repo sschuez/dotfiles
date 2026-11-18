@@ -187,7 +187,7 @@ same script as in omarchy-dotfiles, so both machines behave alike.
 
 ```bash
 wt new feature-auth   # create (branches from the current branch)
-wt rm feature-auth    # tear down and remove
+wt rm feature-auth    # tear down and remove (refuses if there are uncommitted changes; --force overrides)
 wt ls                 # list, with slot numbers
 ```
 

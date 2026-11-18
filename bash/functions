@@ -78,3 +78,11 @@ agent-cleanup() {
     fi
   fi
 }
+
+# exo with the Owner key from 1Password (submissioag, Shared/exoscale-ops): no key on
+# disk, Touch ID when op needs authorization. The ops key id shows as concealed.
+exo() {
+  EXOSCALE_API_KEY="op://Shared/exoscale-ops/username" \
+  EXOSCALE_API_SECRET="op://Shared/exoscale-ops/credential" \
+    op run --account submissioag.1password.com -- command exo "$@"
+}

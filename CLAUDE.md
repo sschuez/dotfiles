@@ -110,24 +110,14 @@ Scripts automatically maintain `brew-formulas.txt` and `brew-casks.txt` for repr
 
 ## Development Patterns
 
-### Multi-Agent Git Workflow
-The repository includes scripts for managing multiple git worktrees:
-
-```bash
-# Setup
-setup-agent <name>    # Create new worktree with branch
-setup-agents          # Multi-agent setup wizard
-
-# View
-agents                # List all worktrees
-agents-status         # Show worktrees + branch status
-
-# Cleanup
-agent-cleanup              # Interactive - select agents to remove
-agent-cleanup <name>       # Direct removal by name or path
-```
-
-The cleanup script removes the worktree, cleans up Docker environments (if applicable), and optionally deletes the branch. Worktrees are stored in `~/.claude-worktrees/<project>/`.
+### Worktrees
+`scripts/wt` (alias `wt`) creates and removes git worktrees with their own
+ports, Docker project and databases: `wt new <name>`, `wt rm <name>`, `wt ls`.
+Claude Code's `WorktreeCreate` / `WorktreeRemove` hooks
+(`scripts/worktree-create-hook.sh`, `scripts/worktree-cleanup-hook.sh`) call
+`wt hook create|remove`. `scripts/wt` is a copy of
+omarchy-dotfiles/bin/.local/bin/wt: change it there and copy it here. See the
+README's Worktrees section.
 
 ### Theme Development
 When adding new themes:

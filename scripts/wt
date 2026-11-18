@@ -1,0 +1,298 @@
+#!/usr/bin/env bash
+# Copy of omarchy-dotfiles/bin/.local/bin/wt (same file on Linux and macOS);
+# change it there and copy it here, so both machines behave the same.
+# wt: git worktrees that get their own ports, Docker project and databases,
+# and are cleaned up completely when removed. No per-repo setup needed.
+#
+#   wt new <name> [base]   create a worktree (base: current branch)
+#   wt rm <name|path>      tear it down and remove it
+#   wt ls                  list this repo's worktrees
+#   wt hook create|remove  Claude Code WorktreeCreate / WorktreeRemove hooks
+#                          (JSON on stdin), so `claude --worktree <name>` uses this
+#
+# A worktree lives next to the repo, in <repo>-worktrees/<name>, on branch
+# worktree-<name>, and gets a slot number (1, 2, ...) unique in the repo.
+# Its .env (copied from the main checkout, if there is one) gets:
+#
+#   COMPOSE_PROJECT_NAME  <repo>_<name>: own containers, volumes and images
+#   <X>_PORT              default + slot, for every ${<X>_PORT:-default} in
+#                         the compose file (e.g. APP_PORT 3000 -> 3001)
+#   PORT                  3000 + slot, for dev servers run without Docker
+#   POSTGRES_DB, POSTGRES_TEST_DB
+#                         <project>_development / _test, if config/database.yml
+#                         reads them (Rails on a shared host Postgres)
+#
+# Removal runs `docker compose down` for that project (volumes and images too),
+# drops host Postgres databases named <project>_*, stops servers still running
+# from the worktree, removes it, and deletes its branch if merged.
+#
+# Gitignored files to copy come from .worktreeinclude (.gitignore syntax, the
+# same file Claude Code uses), or default to .env, config/master.key and
+# config/credentials/*.key. Optional: bin/worktree-setup and
+# bin/worktree-teardown run inside the worktree for anything unusual.
+# Runs on Linux and macOS (bash 3.2+).
+
+set -euo pipefail
+
+log() { echo "[wt] $*" >&2; }
+die() { log "error: $*"; exit 1; }
+
+DEFAULT_INCLUDES='.env
+config/master.key
+config/credentials/*.key'
+
+# The main checkout, even when called from inside a worktree.
+main_dir() {
+  local common
+  common=$(git -C "${1:-.}" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) ||
+    die "not inside a git repository"
+  dirname "$common"
+}
+
+worktrees_root() { echo "$(dirname "$1")/$(basename "$1")-worktrees"; }
+
+# A worktree's private git dir (.git/worktrees/<id>), where wt keeps its slot.
+admin_dir() { git -C "$1" rev-parse --path-format=absolute --git-dir; }
+
+linked_worktrees() { git -C "$1" worktree list --porcelain | sed -n 's/^worktree //p' | tail -n +2; }
+
+slot_of() { cat "$(admin_dir "$1" 2>/dev/null)/wt-slot" 2>/dev/null || true; }
+
+next_slot() {
+  local used=" " wt slot=1
+  while IFS= read -r wt; do used="$used$(slot_of "$wt") "; done < <(linked_worktrees "$1")
+  while case "$used" in *" $slot "*) true ;; *) false ;; esac; do slot=$((slot + 1)); done
+  echo "$slot"
+}
+
+# Lowercase letters, digits and _ only: valid for Compose and Postgres names.
+project_name() {
+  echo "$(basename "$1")_$2" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9_\n' '_'
+}
+
+compose_file() {
+  local f
+  for f in compose.yaml compose.yml docker-compose.yaml docker-compose.yml; do
+    [ -f "$1/$f" ] && { echo "$1/$f"; return; }
+  done
+}
+
+env_value() { sed -n "s/^$1=//p" "$2" 2>/dev/null | tail -1; }
+
+# Copy gitignored files from the main checkout, like Claude Code does.
+copy_includes() {
+  local main=$1 wt=$2 patterns file
+  patterns=$(mktemp)
+  if [ -f "$main/.worktreeinclude" ]; then cp "$main/.worktreeinclude" "$patterns"
+  else echo "$DEFAULT_INCLUDES" >"$patterns"; fi
+  comm -12 \
+    <(git -C "$main" ls-files --others --ignored --exclude-from="$patterns" | sort) \
+    <(git -C "$main" ls-files --others --ignored --exclude-standard | sort) |
+    while IFS= read -r file; do
+      mkdir -p "$wt/$(dirname "$file")"
+      cp -p "$main/$file" "$wt/$file"
+      log "copied $file"
+    done
+  rm -f "$patterns"
+}
+
+# Give the worktree its own identity in .env. Keys set here replace any copied
+# from the main checkout, so tools that read .env see one value each.
+write_env() {
+  local main=$1 wt=$2 name=$3 slot=$4 project compose vars="" var default line keys
+  project=$(project_name "$main" "$name")
+  compose=$(compose_file "$wt")
+
+  vars="COMPOSE_PROJECT_NAME=$project"$'\n'"PORT=$((3000 + slot))"
+  if [ -n "$compose" ]; then
+    while IFS= read -r line; do
+      var=${line%%:*}; default=${line##*-}
+      vars="$vars"$'\n'"$var=$((default + slot))"
+    done < <(grep -oE '\$\{[A-Z0-9_]*PORT:-[0-9]+\}' "$compose" | tr -d '${}' | sort -u)
+  fi
+  if grep -q 'POSTGRES_DB' "$wt/config/database.yml" 2>/dev/null; then
+    vars="$vars"$'\n'"POSTGRES_DB=${project}_development"
+  fi
+  if grep -q 'POSTGRES_TEST_DB' "$wt/config/database.yml" 2>/dev/null; then
+    vars="$vars"$'\n'"POSTGRES_TEST_DB=${project}_test"
+  fi
+
+  keys=$(echo "$vars" | cut -d= -f1 | paste -sd'|' -)
+  touch "$wt/.env"
+  { grep -vE "^($keys)=" "$wt/.env" || true
+    echo ""
+    echo "# Worktree $name (slot $slot), set by wt"
+    echo "$vars"
+  } >"$wt/.env.wt" && mv "$wt/.env.wt" "$wt/.env"
+  log "$(echo "$vars" | tr '\n' ' ')"
+}
+
+run_repo_script() {
+  local script=$1 main=$2 wt=$3 name=$4
+  [ -x "$wt/bin/$script" ] || return 0
+  log "running bin/$script"
+  (cd "$wt" && WORKTREE_NAME="$name" WORKTREE_DIR="$wt" MAIN_DIR="$main" \
+    WORKTREE_SLOT="$(slot_of "$wt")" "bin/$script") >&2
+}
+
+teardown_docker() {
+  local wt=$1 project=$2 compose volume
+  command -v docker >/dev/null || return 0
+  compose=$(compose_file "$wt")
+  docker info >/dev/null 2>&1 || { log "Docker not reachable; skipping containers for $project"; return 0; }
+  log "removing Docker project $project (containers, volumes, images)"
+  if [ -n "$compose" ]; then
+    (cd "$wt" && docker compose -p "$project" down --volumes --rmi local --remove-orphans) >&2 2>&1 || true
+  else
+    docker compose -p "$project" down --volumes --remove-orphans >&2 2>&1 || true
+  fi
+  docker volume ls -q --filter "label=com.docker.compose.project=$project" |
+    while read -r volume; do docker volume rm "$volume" >/dev/null 2>&1 || true; done
+}
+
+# Databases this worktree created on a host Postgres (Rails host runs make
+# <project>_development, _test, _test_0.., _cache, ...). Only the unique
+# <repo>_<worktree>_ prefix matches, never the main checkout's databases.
+teardown_postgres() {
+  local wt=$1 project=$2 port db
+  command -v psql >/dev/null || return 0
+  port=$(env_value POSTGRES_PORT "$wt/.env")
+  pg() { psql -h localhost -p "${port:-5432}" -d postgres -X -q "$@"; }
+  pg -c 'SELECT 1' >/dev/null 2>&1 || return 0
+  pg -tAc "SELECT datname FROM pg_database WHERE starts_with(datname, '${project}_')" 2>/dev/null |
+    while read -r db; do
+      case "$db" in "${project}"_*[a-z0-9]) ;; *) continue ;; esac
+      log "dropping database $db"
+      pg -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE)" >&2 2>&1 || true
+    done
+}
+
+# PIDs listening on a TCP port, for the current user.
+listening_pids() {
+  if command -v ss >/dev/null; then
+    ss -Hltnp 2>/dev/null | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u
+  elif command -v lsof >/dev/null; then
+    lsof -a -nP -iTCP -sTCP:LISTEN -u "$(id -u)" -t 2>/dev/null | sort -u
+  fi
+}
+
+process_cwd() {
+  if [ -e "/proc/$1/cwd" ]; then readlink "/proc/$1/cwd" 2>/dev/null
+  else lsof -a -p "$1" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p'; fi
+}
+
+# Servers started from inside the worktree (rails, bin/dev, node...) keep
+# running from a deleted directory otherwise. Our own ancestors are spared.
+stop_servers() {
+  local wt pid cwd ancestors=" $$ " p=$PPID stopped="" alive
+  wt=$(cd "$1" && pwd -P)
+  while [ -n "$p" ] && [ "$p" -gt 1 ] 2>/dev/null; do
+    ancestors="$ancestors$p "; p=$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')
+  done
+  for pid in $(listening_pids); do
+    case "$ancestors" in *" $pid "*) continue ;; esac
+    cwd=$(process_cwd "$pid")
+    case "$cwd" in "$wt" | "$wt"/*)
+      log "stopping server $pid: $(ps -o command= -p "$pid" | cut -c1-60)"
+      kill -TERM "$pid" 2>/dev/null && stopped="$stopped $pid" ;;
+    esac
+  done
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    alive=""; for pid in $stopped; do kill -0 "$pid" 2>/dev/null && alive="$alive $pid"; done
+    [ -z "$alive" ] && return 0; sleep 1
+  done
+  for pid in $alive; do log "killing $pid (ignored TERM)"; kill -KILL "$pid" 2>/dev/null || true; done
+}
+
+cmd_new() {
+  local name=${1:-} base=${2:-${WORKTREE_BASE:-}} main wt slot
+  [ -n "$name" ] || die "usage: wt new <name> [base]"
+  name=$(echo "$name" | tr -c 'A-Za-z0-9._\n-' '-')
+  main=$(main_dir "${WT_FROM:-.}")
+  wt="$(worktrees_root "$main")/$name"
+  base=${base:-$(git -C "$main" branch --show-current)}
+
+  if [ -d "$wt" ]; then
+    log "reusing existing worktree $wt"
+  else
+    mkdir -p "$(dirname "$wt")"
+    git -C "$main" worktree add -b "worktree-$name" "$wt" ${base:+"$base"} >&2 2>&1 ||
+      git -C "$main" worktree add "$wt" "worktree-$name" >&2 2>&1 ||
+      die "could not create worktree"
+    slot=$(next_slot "$main")
+    echo "$slot" >"$(admin_dir "$wt")/wt-slot"
+    copy_includes "$main" "$wt"
+    write_env "$main" "$wt" "$name" "$slot"
+    if command -v mise >/dev/null; then
+      for f in mise.toml .mise.toml; do [ -f "$wt/$f" ] && mise trust -q "$wt/$f" >&2 || true; done
+    fi
+    run_repo_script worktree-setup "$main" "$wt" "$name" || log "bin/worktree-setup failed (worktree kept)"
+  fi
+  echo "$wt"
+}
+
+cmd_rm() {
+  local target=${1:-} main wt name branch project
+  [ -n "$target" ] || die "usage: wt rm <name|path>"
+  main=$(main_dir "${WT_FROM:-.}")
+  case "$target" in /*) wt=$target ;; *) wt="$(worktrees_root "$main")/$target" ;; esac
+  [ -d "$wt" ] || die "no worktree at $wt"
+  [ "$(cd "$wt" && pwd -P)" != "$(cd "$main" && pwd -P)" ] || die "refusing to remove the main checkout"
+  name=$(basename "$wt")
+  branch=$(git -C "$wt" branch --show-current 2>/dev/null || true)
+  project=$(env_value COMPOSE_PROJECT_NAME "$wt/.env")
+
+  run_repo_script worktree-teardown "$main" "$wt" "$name" || log "bin/worktree-teardown failed (continuing)"
+  # Only a project name wt generated for this worktree is torn down.
+  if [ -n "$project" ] && [ "$project" = "$(project_name "$main" "$name")" ]; then
+    teardown_docker "$wt" "$project"
+    teardown_postgres "$wt" "$project"
+  fi
+  stop_servers "$wt"
+
+  log "removing $wt"
+  git -C "$main" worktree remove --force --force "$wt" >&2 2>&1 || true
+  # git can stop early and leave ignored files (tmp/, log/) behind after it
+  # has already forgotten the worktree; finish only in that case.
+  if [ -d "$wt" ] && ! linked_worktrees "$main" | grep -qxF "$wt"; then rm -rf "$wt"; fi
+  git -C "$main" worktree prune
+  rmdir "$(dirname "$wt")" 2>/dev/null || true # the <repo>-worktrees folder, once empty
+
+  if [ "$branch" = "worktree-$name" ]; then
+    if git -C "$main" branch -d "$branch" >/dev/null 2>&1; then log "deleted merged branch $branch"
+    else log "kept branch $branch (not merged; delete with: git branch -D $branch)"; fi
+  fi
+}
+
+cmd_ls() {
+  local main wt
+  main=$(main_dir "${WT_FROM:-.}")
+  while IFS= read -r wt; do
+    printf '%-50s slot %-3s %s\n' "$wt" "$(slot_of "$wt")" "$(git -C "$wt" branch --show-current 2>/dev/null)"
+  done < <(linked_worktrees "$main")
+}
+
+# Claude Code hooks: JSON on stdin. stdout must be only the worktree path.
+cmd_hook() {
+  local input path
+  input=$(cat)
+  command -v jq >/dev/null || die "jq is required for the Claude Code hooks"
+  case "${1:-}" in
+  create)
+    WT_FROM=$(jq -r '.cwd' <<<"$input") cmd_new "$(jq -r '.name' <<<"$input")" ;;
+  remove)
+    # Never fail removal from here: a failed hook leaves the worktree stuck.
+    path=$(jq -r '.worktree_path' <<<"$input")
+    WT_FROM=$(jq -r '.cwd // empty' <<<"$input")
+    WT_FROM=${WT_FROM:-$path} cmd_rm "$path" || true ;;
+  *) die "usage: wt hook create|remove" ;;
+  esac
+}
+
+case "${1:-}" in
+new) shift; cmd_new "$@" ;;
+rm) shift; cmd_rm "$@" ;;
+ls) cmd_ls ;;
+hook) shift; cmd_hook "$@" ;;
+*) sed -n '2,31p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+esac

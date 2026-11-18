@@ -158,15 +158,8 @@ alias td="osascript -e 'tell application \"System Events\"
       end tell
     end tell'"
 
-# Multi agent setup
-alias setup-agents='~/code/dotfiles/scripts/setup_multi_agent.sh'
-alias setup-agent='~/code/dotfiles/scripts/setup-agent.sh'
-
-# Git worktree management
-alias agents='git worktree list'
-alias agents-status='git worktree list && echo "" && git branch -vv | grep -E "(feat/|fix/|chore/)"'
-alias agent-remove='git worktree remove'
-alias agent-cleanup='~/code/dotfiles/scripts/agent-cleanup.sh'
+# Git worktrees with their own ports, Docker project and databases (run `wt`)
+alias wt='~/code/dotfiles/scripts/wt'
 
 # Brew helpers
 brew_install_update() {

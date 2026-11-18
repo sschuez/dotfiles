@@ -106,7 +106,7 @@ selection. To keep `FORCE_COLOR` out of the commands Codex runs, add this to
 - `dcb` - Docker compose build
 - `kl` - Kamal logs
 - `be` - Bundle exec
-- `setup-agent <name>` - Create worktree with auto Docker setup (see below)
+- `wt new <name>` / `wt rm <name>` - Worktree with its own ports, Docker project and databases (see below)
 
 ### Navigation
 
@@ -179,108 +179,52 @@ If migrating from rbenv to mise for Ruby version management:
 
 The dotfiles already handle mise as the primary version manager with automatic fallback to individual tools.
 
-## Claude Code Worktree Hooks
+## Worktrees (`wt`)
 
-`scripts/worktree-create-hook.sh` and `scripts/worktree-cleanup-hook.sh` power Claude Code's `--worktree` / `isolation: "worktree"` feature (wired up as `WorktreeCreate`/`WorktreeRemove` hooks in `~/.claude/settings.json`). They create/remove git worktrees under `<repo>/.claude/worktrees/<name>` with automatic environment isolation. The script headers document the full design; the short version:
+`scripts/wt` creates git worktrees that get their own ports, Docker project and
+databases, and removes all of it again. It needs no per-repo setup. It is the
+same script as in omarchy-dotfiles, so both machines behave alike.
 
-**Create hook** (layered — each layer is best-effort, failures never block worktree creation):
+```bash
+wt new feature-auth   # create (branches from the current branch)
+wt rm feature-auth    # tear down and remove
+wt ls                 # list, with slot numbers
+```
 
-| Layer | Applies to | What it does |
-|---|---|---|
-| Base | any repo | worktree + branch `worktree-<name>`, `.env` copied from main checkout (or `.env.example`/`.template`/`.sample`) |
-| Port | non-Docker repos with a dev server (Rails / `Procfile` / `package.json`) | free `PORT` allocated and appended to `.env` (read by Puma via `bin/dev`/foreman/dotenv, and by Node dev servers) |
-| Docker | compose/`bin/docker-env` repos | unique free ports, `COMPOSE_PROJECT_NAME=<repo>_<name>` pinned in `.env` (no container/volume collisions across worktrees or repos) |
-| Rails | Rails repos | `master.key`, `config/credentials/*.key`, `credentials.yml.enc`, `database.yml`, `RAILS_MASTER_KEY` in `.env` |
-| Extension | repos with `bin/worktree-setup` | runs it last, inside the worktree, with `WORKTREE_DIR`, `MAIN_DIR`, `WORKTREE_NAME`, `APP_PORT` exported |
+Claude Code uses it too: `scripts/worktree-create-hook.sh` and
+`scripts/worktree-cleanup-hook.sh` (the `WorktreeCreate` / `WorktreeRemove` hooks
+in `~/.claude/settings.json`) just call `wt hook create|remove`. So
+`claude --worktree <name>` gets the same setup, and removing the worktree at the
+exit prompt cleans everything up.
 
-**Cleanup hook**: `docker compose down -v` (project name read from the worktree's `.env`), removes leftover volumes/images, removes the worktree. Deletes the branch only if fully merged — unmerged work survives for manual review.
+**What a worktree gets.** It lives in `<repo>-worktrees/<name>` next to the
+repo, on branch `worktree-<name>`, with a slot number (1, 2, ...). Its `.env`
+(copied from the main checkout, if any) gets:
 
-**Making a repo worktree-ready** requires only parameterized compose ports:
+| Variable | Value |
+|---|---|
+| `COMPOSE_PROJECT_NAME` | `<repo>_<name>`: own containers, volumes, images |
+| `<X>_PORT` | default + slot, for every `${<X>_PORT:-default}` in the compose file (`APP_PORT` 3000 -> 3001) |
+| `PORT` | 3000 + slot, for dev servers run without Docker |
+| `POSTGRES_DB`, `POSTGRES_TEST_DB` | `<project>_development` / `_test`, if `config/database.yml` reads them |
+
+Gitignored files are copied per the repo's `.worktreeinclude` (`.gitignore`
+syntax, the same file Claude Code uses), defaulting to `.env`,
+`config/master.key` and `config/credentials/*.key`.
+
+**Removal** runs `docker compose down` for that project (with volumes and
+images), drops host Postgres databases named `<project>_*`, stops servers still
+running from the worktree, removes it, and deletes the branch only if merged.
+
+**Making a repo worktree-ready** only needs parameterized compose ports:
 
 ```yaml
 ports:
   - "${APP_PORT:-3000}:3000"
-  - "${DEBUG_PORT:-1234}:1234"
 ```
 
-Optionally add an executable `bin/worktree-setup` for anything project-specific (seed data, extra credentials, ...).
-
-## Git Worktree & Docker Agent Setup
-
-The `setup-agent` script creates isolated development environments for AI agents or parallel development work. Each environment gets its own git worktree and Docker containers.
-
-### Quick Usage
-
-```bash
-# From any git repository (e.g., submissio)
-setup-agent feature-auth      # Creates worktree + auto Docker setup
-setup-agent bug-fix --no-docker  # Creates worktree only (skip Docker)
-```
-
-### What it does
-
-1. **Creates a git worktree** with branch `feat/<name>` in `../<repo>-<name>/`
-2. **Auto-detects Docker setup** - if `bin/docker-env` exists in the repo
-3. **Finds available ports** automatically (checks Docker & system)
-4. **Configures isolated Docker** environment with unique containers/volumes
-5. **Opens new tmux/iTerm window** for immediate work
-
-### Port Allocation
-
-The script intelligently finds free ports:
-- **Main worktree**: Always uses 3000 (app) / 7900 (Chrome)
-- **Agent worktrees**: Auto-increments from 3001/7901, 3002/7902, etc.
-- **Conflict detection**: Checks both Docker containers and system ports
-
-### Example Workflow
-
-```bash
-# In main submissio directory
-setup-agent payments-feature
-
-# Output:
-🤖 Creating worktree: payments-feature
-📂 From branch: develop
-🌿 Creating branch: feat/payments-feature
-✅ Worktree created at: ../submissio-payments-feature
-
-🐳 Setting up Docker environment...
-📍 Found available ports: 3001 (app), 7901 (Chrome)
-🔧 Running: bin/docker-env setup payments-feature 3001
-✅ Docker environment configured!
-
-Access points:
-  App: http://localhost:3001
-  Chrome NoVNC: http://localhost:7901
-```
-
-### Managing Worktrees
-
-```bash
-# List all worktrees
-agents                # or: git worktree list
-agents-status         # Show worktrees + branch status
-
-# Switch to a worktree (each is a separate directory)
-cd ~/.claude-worktrees/<project>/<agent-name>
-
-# Cleanup when done
-agent-cleanup              # Interactive - select agents to remove
-agent-cleanup <name>       # Direct removal by name or path
-```
-
-The cleanup script removes the worktree, cleans up Docker environments, and optionally deletes the branch.
-
-### Docker Environment Management
-
-If the repository has Docker environments (like submissio):
-
-```bash
-# In the worktree directory
-bin/docker-env list      # See all Docker environments
-bin/docker-env current   # Check current config
-bin/docker-env clean feature-old  # Clean up old environment
-```
-
-This setup allows multiple Claude agents or developers to work on different features simultaneously without any Docker conflicts or port collisions.
+For anything unusual, an executable `bin/worktree-setup` / `bin/worktree-teardown`
+in the repo runs inside the worktree (with `WORKTREE_NAME`, `WORKTREE_DIR`,
+`MAIN_DIR`, `WORKTREE_SLOT`). `scripts/docker-orphans.sh` still finds Docker
+resources whose worktree is gone, for worktrees deleted by other means.
 

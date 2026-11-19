@@ -12,8 +12,10 @@
 #   wt hook create|remove  Claude Code WorktreeCreate / WorktreeRemove hooks
 #                          (JSON on stdin), so `claude --worktree <name>` uses this
 #
-# A worktree lives next to the repo, in <repo>-worktrees/<name>, on branch
-# worktree-<name>, and gets a slot number (1, 2, ...) unique in the repo.
+# A worktree lives inside the repo, in <repo>/.claude/worktrees/<name> (where
+# Claude Code puts its own), on branch worktree-<name>, and gets a slot number
+# (1, 2, ...) unique in the repo. A repo that does not gitignore that folder
+# gets it in .git/info/exclude, so the main checkout's status stays clean.
 # Its .env (copied from the main checkout, if there is one; only written in
 # repos that gitignore .env) gets:
 #
@@ -52,12 +54,29 @@ main_dir() {
   dirname "$common"
 }
 
-worktrees_root() { echo "$(dirname "$1")/$(basename "$1")-worktrees"; }
+worktrees_root() { echo "$1/.claude/worktrees"; }
 
 # A worktree's private git dir (.git/worktrees/<id>), where wt keeps its slot.
 admin_dir() { git -C "$1" rev-parse --path-format=absolute --git-dir; }
 
 linked_worktrees() { git -C "$1" worktree list --porcelain | sed -n 's/^worktree //p' | tail -n +2; }
+
+# Where the worktree of that name is, or where a new one goes. One made
+# before worktrees moved into the repo sits in <repo>-worktrees/<name>.
+worktree_named() {
+  local wt
+  while IFS= read -r wt; do
+    [ "$(basename "$wt")" = "$2" ] && { echo "$wt"; return; }
+  done < <(linked_worktrees "$1")
+  echo "$(worktrees_root "$1")/$2"
+}
+
+# Keep the worktrees out of the main checkout's status.
+ignore_worktrees() {
+  git -C "$1" check-ignore -q "$(worktrees_root "$1")/x" && return 0
+  mkdir -p "$1/.git/info"
+  echo "/.claude/worktrees/" >>"$1/.git/info/exclude"
+}
 
 slot_of() { cat "$(admin_dir "$1" 2>/dev/null)/wt-slot" 2>/dev/null || true; }
 
@@ -78,9 +97,11 @@ compose_file() {
   for f in compose.yaml compose.yml docker-compose.yaml docker-compose.yml; do
     [ -f "$1/$f" ] && { echo "$1/$f"; return; }
   done
+  return 0 # no compose file is not an error
 }
 
-env_value() { sed -n "s/^$1=//p" "$2" 2>/dev/null | tail -1; }
+# Empty when the file or the key is missing.
+env_value() { { sed -n "s/^$1=//p" "$2" 2>/dev/null || true; } | tail -1; }
 
 # Copy gitignored files from the main checkout, like Claude Code does.
 copy_includes() {
@@ -218,13 +239,14 @@ cmd_new() {
   [ -n "$name" ] || die "usage: wt new <name> [base]"
   name=$(echo "$name" | tr -c 'A-Za-z0-9._\n-' '-')
   main=$(main_dir "${WT_FROM:-.}")
-  wt="$(worktrees_root "$main")/$name"
+  wt=$(worktree_named "$main" "$name")
   base=${base:-$(git -C "$main" branch --show-current)}
 
   if [ -d "$wt" ]; then
     log "reusing existing worktree $wt"
   else
     mkdir -p "$(dirname "$wt")"
+    ignore_worktrees "$main"
     git -C "$main" worktree add -b "worktree-$name" "$wt" ${base:+"$base"} >&2 2>&1 ||
       git -C "$main" worktree add "$wt" "worktree-$name" >&2 2>&1 ||
       die "could not create worktree"
@@ -249,7 +271,7 @@ cmd_rm() {
   target=${1:-}
   [ -n "$target" ] || die "usage: wt rm [--force] <name|path>"
   main=$(main_dir "${WT_FROM:-.}")
-  case "$target" in /*) wt=$target ;; *) wt="$(worktrees_root "$main")/$target" ;; esac
+  case "$target" in /*) wt=$target ;; *) wt=$(worktree_named "$main" "$target") ;; esac
   [ -d "$wt" ] || die "no worktree at $wt"
   [ "$(cd "$wt" && pwd -P)" != "$(cd "$main" && pwd -P)" ] || die "refusing to remove the main checkout"
   name=$(basename "$wt")
@@ -274,7 +296,7 @@ cmd_rm() {
   # has already forgotten the worktree; finish only in that case.
   if [ -d "$wt" ] && ! linked_worktrees "$main" | grep -qxF "$wt"; then rm -rf "$wt"; fi
   git -C "$main" worktree prune
-  rmdir "$(dirname "$wt")" 2>/dev/null || true # the <repo>-worktrees folder, once empty
+  rmdir "$(dirname "$wt")" 2>/dev/null || true # the folder of the worktrees, once empty
 
   if [ "$branch" = "worktree-$name" ]; then
     if git -C "$main" branch -d "$branch" >/dev/null 2>&1; then log "deleted merged branch $branch"
@@ -313,5 +335,5 @@ new) shift; cmd_new "$@" ;;
 rm) shift; cmd_rm "$@" ;;
 ls) cmd_ls ;;
 hook) shift; cmd_hook "$@" ;;
-*) sed -n '4,35p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+*) sed -n '4,37p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac

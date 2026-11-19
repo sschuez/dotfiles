@@ -197,8 +197,10 @@ in `~/.claude/settings.json`) just call `wt hook create|remove`. So
 `claude --worktree <name>` gets the same setup, and removing the worktree at the
 exit prompt cleans everything up.
 
-**What a worktree gets.** It lives in `<repo>-worktrees/<name>` next to the
-repo, on branch `worktree-<name>`, with a slot number (1, 2, ...). Its `.env`
+**What a worktree gets.** It lives inside the repo, in
+`<repo>/.claude/worktrees/<name>` (where Claude Code puts its own; a repo that
+does not gitignore that folder gets it in `.git/info/exclude`), on branch
+`worktree-<name>`, with a slot number (1, 2, ...). Its `.env`
 (copied from the main checkout, if any) gets:
 
 | Variable | Value |

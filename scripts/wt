@@ -174,21 +174,35 @@ teardown_docker() {
     while read -r volume; do docker volume rm "$volume" >/dev/null 2>&1 || true; done
 }
 
+# Sets PSQL to a psql that reaches the Postgres on localhost:$1: on PATH, else
+# a Homebrew keg (postgresql@N is keg-only, so not on PATH), else inside the
+# Docker container that publishes the port (Omarchy's `omarchy install docker dbs`).
+find_psql() {
+  local port=$1 bin container
+  for bin in "$(command -v psql || true)" /opt/homebrew/opt/postgresql*/bin/psql /usr/local/opt/postgresql*/bin/psql; do
+    [ -x "$bin" ] && { PSQL=("$bin" -h localhost -p "$port"); return 0; }
+  done
+  command -v docker >/dev/null && docker info >/dev/null 2>&1 || return 1
+  container=$(docker ps --format '{{.ID}} {{.Ports}}' | grep -E "[:]$port->" | head -1 | cut -d' ' -f1 || true)
+  [ -n "$container" ] && PSQL=(docker exec "$container" psql)
+}
+
 # Databases this worktree created on a host Postgres (Rails host runs make
 # <project>_development, _test, _test_0.., _cache, ...). Only the unique
 # <repo>_<worktree>_ prefix matches, never the main checkout's databases.
 teardown_postgres() {
   local wt=$1 project=$2 port user db pg_user="" found=""
-  command -v psql >/dev/null || return 0
   port=$(env_value POSTGRES_PORT "$wt/.env")
+  port=${port:-5432}
+  find_psql "$port" || { log "no psql for the Postgres on port $port; check it for ${project}_* databases by hand"; return 0; }
   # The app's user from .env, then "postgres" (Docker images, Omarchy's
   # `omarchy install docker dbs`), then the login user (Homebrew on macOS).
   for user in "$(env_value POSTGRES_USER "$wt/.env")" postgres ""; do
-    if psql -h localhost -p "${port:-5432}" ${user:+-U "$user"} -d postgres -X -q \
+    if "${PSQL[@]}" ${user:+-U "$user"} -d postgres -X -q \
       -c 'SELECT 1' >/dev/null 2>&1; then pg_user=$user; found=1; break; fi
   done
-  [ -n "$found" ] || return 0
-  pg() { psql -h localhost -p "${port:-5432}" ${pg_user:+-U "$pg_user"} -d postgres -X -q "$@"; }
+  [ -n "$found" ] || { log "cannot connect to the Postgres on port $port; check it for ${project}_* databases by hand"; return 0; }
+  pg() { "${PSQL[@]}" ${pg_user:+-U "$pg_user"} -d postgres -X -q "$@"; }
   pg -tAc "SELECT datname FROM pg_database WHERE starts_with(datname, '${project}_')" 2>/dev/null |
     while read -r db; do
       case "$db" in "${project}"_*[a-z0-9]) ;; *) continue ;; esac
